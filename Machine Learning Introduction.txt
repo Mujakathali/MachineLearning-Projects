@@ -1,3073 +1,508 @@
-ex no 1:
-
-Donor.java
-package com.examly.springapp.model;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-
-@Entity
-public class Donor {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int donorId;
-    private String name;
-    private int age;
-    private String address;
-    private String bloodGroup;
-
-    public Donor() {
-    }
-
-    public Donor(int donorId, String name, int age, String address, String bloodGroup) {
-        this.donorId = donorId;
-        this.name = name;
-        this.age = age;
-        this.address = address;
-        this.bloodGroup = bloodGroup;
-    }
-
-    public int getDonorId() {
-        return donorId;
-    }
-
-    public void setDonorId(int donorId) {
-        this.donorId = donorId;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getBloodGroup() {
-        return bloodGroup;
-    }
-
-    public void setBloodGroup(String bloodGroup) {
-        this.bloodGroup = bloodGroup;
-    }
-}
-
-DonorRepo.java
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.Donor;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
-
-import java.util.List;
-
-@Repository
-public interface DonorRepo extends JpaRepository<Donor, Integer> {
-   Donor findByDonorId(int donorId);
-    @Query("SELECT d FROM Donor d ORDER BY d.age")
-    List<Donor> findByDonorId();
-
-    @Query("SELECT d FROM Donor d ORDER BY d.bloodGroup")
-    List<Donor> findByBloodGroup();
-    @Query("SELECT d FROM Donor  d where d.age BETWEEN :minAge AND :maxAge")
-    List<Donor> findByAgeRange(int minAge, int maxAge);
-}
-
-DonorService.java
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.Donor;
-import com.examly.springapp.repository.DonorRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
-
-@Service
-public class DonorService {
-    @Autowired
-    private DonorRepo donorRepo;
-
-    
-    // public DonorService(DonorRepo donorRepo) {
-    //     this.donorRepo = donorRepo;
-    // }
-
-    public Donor addDonor(Donor donor) {
-        return donorRepo.save(donor);
-    }
-
-    public Donor getsDonor(int donorId) {
-        return donorRepo.findByDonorId(donorId);
-    }
-
-    public List<Donor> getDonor() {
-        return donorRepo.findAll();
-    }
-
-    public Donor updateDonor(int donorId, Donor donor) {
-        Optional<Donor> donorExist = donorRepo.findById(donorId);
-        if (donorExist.isPresent()) {
-            Donor existingDonor = donorExist.get();
-            existingDonor.setName(donor.getName());
-            existingDonor.setAge(donor.getAge());
-            existingDonor.setAddress(donor.getAddress());
-            return donorRepo.save(donor);
-        }
-        return new Donor();
-    }
-
-    public boolean deleteDonor(int donorId) {
-        Optional<Donor> donorExist=donorRepo.findById(donorId);
-        if(donorExist.isPresent()){
-            donorRepo.deleteById(donorId);
-            System.out.println("Donor deleted Succesfully");
-            return true;
-        }
-        else{
-            System.out.println("Donor Not Found");
-            return false;
-        }
-    }
-
-    public List<Donor> sortAge() {
-        return donorRepo.findByDonorId();
-    }
-
-    public List<Donor> sortByBloodGroup() {
-        return donorRepo.findByBloodGroup();
-    }
-
-    public List<Donor> sortByAgeRange(int minAge, int maxAge) {
-        return donorRepo.findByAgeRange(minAge, maxAge);
-    }
-}
-
-DonorController.java
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.Donor;
-import com.examly.springapp.service.DonorService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-
-
-@RestController
-// @RequestMapping("/donor")
-public class DonorController {
-    @Autowired
-    private  DonorService service;
-
-   
-    // public DonorController(DonorService donorService) {
-    //     this.donorService = donorService;
-    // }
-
-    @PostMapping("/donor")
-    public ResponseEntity<?> addDonor(@RequestBody Donor donor) {
-        try{
-            return new ResponseEntity<>(service.addDonor(donor),HttpStatus.CREATED);
-           }
-           catch(Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-           }
-    }
-
-    @GetMapping("/donor/{donorId}")
-    public ResponseEntity<?> getDonorById(@PathVariable int donorId) {
-       try{
-        return new ResponseEntity<>(service.getsDonor(donorId),HttpStatus.OK);
-       }
-       catch(Exception e){
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-       }
-    }
-
-    @GetMapping("/donor")
-    public ResponseEntity<?> getAllDonors() {
-        try{
-            return new ResponseEntity<>(service.getDonor(),HttpStatus.OK);
-           }
-           catch(Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-           }
-    }
-
-    @PutMapping("/donor/{donorId}")
-    public ResponseEntity<?> updateDonor(@PathVariable int donorId, @RequestBody Donor donorDetails) {
-        try{
-            return new ResponseEntity<>(service.updateDonor(donorId,donorDetails),HttpStatus.OK);
-           }
-           catch(Exception e){
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-           }
-    }
-
-    @DeleteMapping("/donor/{donorId}")
-    public ResponseEntity<?> deleteDonorById(@PathVariable int donorId) {
-        boolean deletionStatus=service.deleteDonor(donorId);
-        if(deletionStatus){
-            return new ResponseEntity<>("Donor deleted Successfully",HttpStatus.OK);
-           }
-        else{
-            return new ResponseEntity<>("Donor Not Found",HttpStatus.NOT_FOUND);
-           }
-    }
-
-    @GetMapping("/donor/age/{age}")
-    public ResponseEntity<?> getDonorsByAge()  {
-        try{
-            return new ResponseEntity<>(service.sortAge(),HttpStatus.OK);
-           }
-           catch(Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-           }
-    }
-
-    @GetMapping("/donor/bloodGroup/{bloodGroup}")
-    public ResponseEntity<?> getDonorsByBloodGroup() {
-        try{
-            return new ResponseEntity<>(service.sortByBloodGroup(),HttpStatus.OK);
-           }
-           catch(Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-           }
-    }
-
-    @GetMapping("/donor/ageRange/{minAge}/{maxAge}")
-    public ResponseEntity<?> getDonorsByAgeRange(@PathVariable int minAge, @PathVariable int maxAge) {
-        try{
-            return new ResponseEntity<>(service.sortByAgeRange(minAge, maxAge),HttpStatus.OK);
-           }
-           catch(Exception e){
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-           }
-    }
-}
-
-ex no 2:
-
-// Student.java
-
-package com.examly.springapp.model;
-
-import javax.persistence.Entity;
-import javax.persistence.Id;
-
-@Entity
-public class Student {
-    @Id
-    int id;
-    String name, address, department;
-    int age;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public String getDepartment() {
-        return department;
-    }
-
-    public void setDepartment(String department) {
-        this.department = department;
-    }
-
-    public int getAge() {
-        return age;
-    }
-
-    public void setAge(int age) {
-        this.age = age;
-    }
-
-    public Student(int id, String name, String address, String department, int age) {
-        this.id = id;
-        this.name = name;
-        this.address = address;
-        this.department = department;
-        this.age = age;
-    }
-
-    public Student() {
-    }
-}
-// StudentRepository.java
-
-package com.examly.springapp.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.examly.springapp.model.Student;
-
-public interface StudentRepository extends JpaRepository<Student, Integer> {
-}
-// StudentService.java
-
-package com.examly.springapp.service;
-
-import java.util.Comparator;
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.examly.springapp.model.Student;
-import com.examly.springapp.repository.StudentRepository;
-
-@Service
-public class StudentService {
-    @Autowired
-    StudentRepository sr;
-
-    public Student create(Student s) {
-        return sr.save(s);
-    }
-
-    public List<Student> getAll() {
-        return sr.findAll();
-    }
-
-    public Student getbyid(int n) {
-        return sr.findById(n).orElse(null);
-    }
-
-    public boolean updateDetails(int id, Student s) {
-        if (this.getbyid(id) == null) {
-            return false;
-        }
-        try {
-            sr.save(s);
-        } catch (Exception e) {
-            return false;
-        }
-        return true;
-    }
-
-    public boolean delete(int id) {
-        if (this.getbyid(id) == null) {
-            return false;
-        }
-        sr.deleteById(id);
-        return true;
-    }
-
-    // sorting by name
-    public List<Student> sortbyname() {
-        List<Student> students = sr.findAll();
-        students.sort(Comparator.comparing(Student::getName));
-        return students;
-    }
-
-    // pagination
-    public List<Student> getStudentsByAgeRange(int minAge, int maxAge) {
-        List<Student> students = sr.findAll();
-        students.removeIf(s -> s.getAge() < minAge || s.getAge() > maxAge);
-        students.sort(Comparator.comparing(Student::getAge));
-        return students;
-    }
-}
-// StudentController.java
-
-package com.examly.springapp.controller;
-
-import java.util.List;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.examly.springapp.model.Student;
-import com.examly.springapp.service.StudentService;
-
-@RestController
-public class StudentController {
-    @Autowired
-    StudentService ss;
-
-    @PostMapping("/student")
-    public ResponseEntity<Student> adddata(@RequestBody Student s) {
-        try {
-            return new ResponseEntity<>(ss.create(s), HttpStatus.CREATED);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/student")
-    public ResponseEntity<List<Student>> showdetails() {
-        try {
-            return new ResponseEntity<>(ss.getAll(), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(ss.getAll(), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/student/{id}")
-    public ResponseEntity<Student> getById(@PathVariable int id) {
-        Student obj = ss.getbyid(id);
-        if (obj != null)
-            return new ResponseEntity<>(obj, HttpStatus.OK);
-        else
-            return new ResponseEntity<>(obj, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @PutMapping("/student/{id}")
-    public ResponseEntity<Student> putMethod(@PathVariable("id") int id, @RequestBody Student s) {
-        if (ss.updateDetails(id, s) == true) {
-            return new ResponseEntity<>(s, HttpStatus.OK);
-        }
-        return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @DeleteMapping("/student/{id}")
-    public ResponseEntity<?> delete(@PathVariable("id") int id) {
-        if (ss.delete(id) == true) {
-            return new ResponseEntity<>("Student deleted successfully", HttpStatus.OK);
-        }
-        return new ResponseEntity<>("Student not found with ID: " + id, HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    // sorting
-    @GetMapping("/student/sortedByName")
-    public ResponseEntity<List<Student>> g() {
-        List<Student> students = ss.sortbyname();
-        return ResponseEntity.ok(students);
-    }
-
-    // pagination
-    @GetMapping("/student/ageRange/{minAge}/{maxAge}")
-    public ResponseEntity<List<Student>> getStudentsByAgeRange(@PathVariable int minAge, @PathVariable int maxAge) {
-        List<Student> students = ss.getStudentsByAgeRange(minAge, maxAge);
-        return ResponseEntity.ok(students);
-    }
-}
-
-ex no 3:
-
-Employee.java
-package com.examly.springapp.model;
-
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import java.util.Date;
-@Entity
-public class Employee {
-    @Id
-    int id;
-    String name,address,phoneNumber,email,jobTitle,department;
-    double salary;
-    Date hireDate;
-    public Employee() {
-    }
-    public Employee(int id, String name, String address, String phoneNumber, String email, String jobTitle,
-            String department, double salary, Date hireDate) {
-        this.id = id;
-        this.name = name;
-        this.address = address;
-        this.phoneNumber = phoneNumber;
-        this.email = email;
-        this.jobTitle = jobTitle;
-        this.department = department;
-        this.salary = salary;
-        this.hireDate = hireDate;
-    }
-    public int getId() {
-        return id;
-    }
-    public void setId(int id) {
-        this.id = id;
-    }
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public String getAddress() {
-        return address;
-    }
-    public void setAddress(String address) {
-        this.address = address;
-    }
-    public String getPhoneNumber() {
-        return phoneNumber;
-    }
-    public void setPhoneNumber(String phoneNumber) {
-        this.phoneNumber = phoneNumber;
-    }
-    public String getEmail() {
-        return email;
-    }
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    public String getJobTitle() {
-        return jobTitle;
-    }
-    public void setJobTitle(String jobTitle) {
-        this.jobTitle = jobTitle;
-    }
-    public String getDepartment() {
-        return department;
-    }
-    public void setDepartment(String department) {
-        this.department = department;
-    }
-    public double getSalary() {
-        return salary;
-    }
-    public void setSalary(double salary) {
-        this.salary = salary;
-    }
-    public Date getHireDate() {
-        return hireDate;
-    }
-    public void setHireDate(Date hireDate) {
-        this.hireDate = hireDate;
-    }
-
-    
-}
-
-
-EmployeeRepo.java
-package com.examly.springapp.repository;
-
-import java.util.Date;
-import java.util.List;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-
-import com.examly.springapp.model.Employee;
-
-public interface EmployeeRepo extends JpaRepository<Employee,Integer>{
-    
-    List<Employee> findByHireDate(Date hireDates);
-    @Query("SELECT SUBSTRING(e.name, 1, 3) FROM Employee e")
-    List<String> findFirstThreeCharactersOfAllNames();
-    
-}
-
-
-EmployeeService.java
-package com.examly.springapp.service;
-
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.examly.springapp.model.Employee;
-import com.examly.springapp.repository.EmployeeRepo;
-
-@Service
-public class EmployeeService {
-    @Autowired
-    EmployeeRepo er;
-
-    //post
-    public Employee postd(Employee emp) {
-        return er.save(emp);
-    }
-
-    //getall
-    public List<Employee> getd() {
-        return er.findAll();
-    }
-
-    //getbyid
-    public Optional<Employee> gettd(int id) {
-        return er.findById(id);
-    }
-
-    
-    public List<Employee> getttd(String hireDate) throws ParseException {
-        Date hireDates = new SimpleDateFormat("yyyy-MM-dd").parse(hireDate);
-        return er.findByHireDate(hireDates);
-    }
-
-    public List<String> gettttd() {
-        return er.findFirstThreeCharactersOfAllNames();
-    }
-}
-
-
-EmployeeController.java
-package com.examly.springapp.controller;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.examly.springapp.model.Employee;
-import com.examly.springapp.service.EmployeeService;
-
-@RestController
-public class EmployeeController {
-    @Autowired
-    EmployeeService es;
-     @PostMapping("/employee")
-    public ResponseEntity<?> postd(@RequestBody Employee emp)
-    {
-        try
-        {
-            return new ResponseEntity<>(es.postd(emp),HttpStatus.CREATED);
-        }catch(Exception e)
-        {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping("/employee")
-    public ResponseEntity<?> getd()
-    {
-        try
-        {
-            return new ResponseEntity<>(es.getd(),HttpStatus.OK);
-        }catch(Exception e)
-        {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @GetMapping("/employee/{id}")
-    public ResponseEntity<?> gettd(@PathVariable int id)
-    {
-        try
-        {
-            return new ResponseEntity<>(es.gettd(id),HttpStatus.OK);
-        }catch(Exception e)
-        {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @GetMapping("/employee/hired/{hireDate}")
-    public ResponseEntity<?> getttd(@PathVariable String hireDate)
-    {
-        try
-        {
-            return new ResponseEntity<>(es.getttd(hireDate),HttpStatus.OK);
-        }catch(Exception e)
-        {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-    @GetMapping("/employee/first-three-characters-of-name")
-    public ResponseEntity<?> gettttd()
-    {
-        try
-        {
-            return new ResponseEntity<>(es.gettttd(),HttpStatus.OK);
-        }catch(Exception e)
-        {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-    }
-
-}
-
-
-exno:4
-
-Employee.java
-package com.examly.springapp.model;
-
-import javax.persistence.Entity;
-import javax.persistence.Id;
-
-@Entity
-public class Employee {
-    @Id
-    int id;
-    String name,designation;
-    double salary;
-    public Employee() {
-    }
-    public Employee(int id, String name, String designation, double salary) {
-        this.id = id;
-        this.name = name;
-        this.designation = designation;
-        this.salary = salary;
-    }
-    public int getId() {
-        return id;
-    }
-    public void setId(int id) {
-        this.id = id;
-    }
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-    public String getDesignation() {
-        return designation;
-    }
-    public void setDesignation(String designation) {
-        this.designation = designation;
-    }
-    public double getSalary() {
-        return salary;
-    }
-    public void setSalary(double salary) {
-        this.salary = salary;
-    }
-
-    
-}
-
-
-EmployeeRepo.java
-package com.examly.springapp.repository;
-
-import java.util.List;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.examly.springapp.model.Employee;
-
-public interface EmployeeRepo extends JpaRepository<Employee,Integer>{
-    List<Employee> findByName(String value);
-
-    List<Employee> findByDesignation(String value);
-
-    List<Employee> findBySalaryBetween(double minSalary, double maxSalary);
-}
-
-
-EmployeeService.java
-package com.examly.springapp.service;
-
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.examly.springapp.model.Employee;
-import com.examly.springapp.repository.EmployeeRepo;
-
-@Service
-public class EmployeeService {
-    @Autowired
-    EmployeeRepo er;
-
-    //post 
-    public Employee create(Employee e)
-    {
-        return er.save(e);
-    }
-
-    //get
-    public List<Employee> getall()
-    {
-        return er.findAll();
-    }
-
-    //getbyid
-    public Employee getById(int id)
-    {
-        return er.findById(id).orElse(null);
-    }
-
-    //group by
- public Map<String, List<Employee>> groupByAttribute(String attribute) {
-        List<Employee> employees = er.findAll();
-        return employees.stream().collect(Collectors.groupingBy(
-                e -> {
-                    switch (attribute) {
-                        case "name":
-                            return e.getName();
-                        case "designation":
-                            return e.getDesignation();
-                        default:
-                            return "Invalid Attribute";
-                    }
-                }
-        ));
-    }
-//findby
-    public List<Employee> findByAttribute(String attribute, String value) {
-        if ("name".equals(attribute)) {
-            return er.findByName(value);
-        } else if ("designation".equals(attribute)) {
-            return er.findByDesignation(value);
-        } else {
-            return null; // Handle invalid attribute
-        }
-    }
-//range
-    public List<Employee> getEmployeesInSalaryRange(double minSalary, double maxSalary) {
-        return er.findBySalaryBetween(minSalary, maxSalary);
-    }
-}
-
-EmployeeController.java
-package com.examly.springapp.controller;
-
-import java.util.List;
-import java.util.Map;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.examly.springapp.model.Employee;
-import com.examly.springapp.service.EmployeeService;
-
-@RestController
-public class EmployeeController {
-    @Autowired
-    EmployeeService es;
-
-    //post
-    @PostMapping("/employees")
-    public ResponseEntity<Employee> post(@RequestBody Employee e)
-    {
-        Employee obj=es.create(e);
-        return new ResponseEntity<>(obj,HttpStatus.CREATED);
-    }
-
-    //get
-    @GetMapping("/employees")
-    public ResponseEntity<List<Employee>> get()
-    {
-        return new ResponseEntity<>(es.getall(),HttpStatus.OK);
-    }
-
-    //getbyid
-    @GetMapping("/employees/{id}")
-    public ResponseEntity<Employee> getbyid(@PathVariable("id") int id)
-    {
-        return new ResponseEntity<>(es.getById(id),HttpStatus.OK);
-    }
-
-     @GetMapping("/employees/groupBy/{attribute}")
-    public Map<String, List<Employee>> groupByAttribute(@PathVariable String attribute) {
-        return es.groupByAttribute(attribute);
-    }
-
-    @GetMapping("/employees/findBy/{attribute}")
-    public List<Employee> findByAttribute(@PathVariable String attribute, @RequestParam String value) {
-        return es.findByAttribute(attribute, value);
-    }
-
-    @GetMapping("/employees/salaryRange")
-    public List<Employee> getEmployeesInSalaryRange(@RequestParam double minSalary, @RequestParam double maxSalary) {
-        return es.getEmployeesInSalaryRange(minSalary, maxSalary);
-    }
-    
-
-}
-
-ex no 5:
-
-
-9.Smart_Home
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.Device;
-import com.examly.springapp.service.DeviceService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@RestController
-public class DeviceController {
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @PostMapping("/devices/user/{userId}")
-    public ResponseEntity<Device> createDevice(@PathVariable int userId, @RequestBody Device device) {
-        Device newDevice = deviceService.createDevice(userId, device);
-        return new ResponseEntity<>(newDevice, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/devices")
-    public ResponseEntity<List<Device>> getAllDevices() {
-        List<Device> devices = deviceService.getAllDevices();
-        return new ResponseEntity<>(devices, HttpStatus.OK);
-    }
-
-    @GetMapping("/devices/{id}")
-    public ResponseEntity<Device> getDeviceById(@PathVariable int id) {
-        Device device = deviceService.getDeviceById(id);
-        if (device == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(device, HttpStatus.OK);
-    }
-
-    @GetMapping("/devices/user/{userId}")
-    public ResponseEntity<List<Device>> getDevicesByUserId(@PathVariable int userId) {
-        List<Device> devices = deviceService.getDevicesByUserId(userId);
-        return new ResponseEntity<>(devices, HttpStatus.OK);
-    }
-
-    @PutMapping("/devices/{id}")
-    public ResponseEntity<Device> updateDevice(@PathVariable int id, @RequestBody Device updatedDevice) {
-        Device device = deviceService.updateDevice(id, updatedDevice);
-        if (device == null) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<>(device, HttpStatus.OK);
-    }
-
-    @PutMapping("/devices/{id}/toggle")
-    public ResponseEntity<String> toggleDeviceStatus(@PathVariable int id) {
-        boolean toggled = deviceService.toggleDeviceStatus(id);
-        if (toggled) {
-            return new ResponseEntity<>("Device status toggled successfully", HttpStatus.OK);
-        }
-        return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    }
-
-    @PutMapping("/devices/{id}/settings")
-    public ResponseEntity<Device> updateDeviceSettings(@PathVariable int id, @RequestBody Device updatedDevice) {
-        Device device = deviceService.updateDeviceSettings(id, updatedDevice);
-        if (device == null) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<>(device, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/devices/{id}")
-    public ResponseEntity<String> deleteDevice(@PathVariable int id) {
-        
-            return new ResponseEntity<>("Device deleted successfully", HttpStatus.OK);
-       
-    }
-}
-
-
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.User;
-import com.examly.springapp.service.UserService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@RestController
-public class UserController {
-
-    @Autowired
-    private UserService userService;
-
-    @PostMapping("/users")
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User newUser = userService.createUser(user);
-        return new ResponseEntity<>(newUser, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/users")
-    public ResponseEntity<List<User>> getAllUsers() {
-        List<User> users = userService.getAllUsers();
-        return new ResponseEntity<>(users, HttpStatus.OK);
-    }
-
-    @GetMapping("/users/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable int id) {
-        User user = userService.getUserById(id);
-        if (user == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(user, HttpStatus.OK);
-    }
-
-    @PutMapping("/users/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable int id, @RequestBody User updatedUser) {
-        User user = userService.updateUser(id, updatedUser);
-        if (user == null) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<>(user, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/users/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable int id) {
-        boolean deleted = userService.deleteUser(id);
-        if (deleted) {
-            return new ResponseEntity<>("User deleted successfully", HttpStatus.OK);
-        }
-        return new ResponseEntity<>("User not found with ID: " + id, HttpStatus.NOT_FOUND);
-    }
-}
-
-
-package com.examly.springapp.model;
-
-import javax.persistence.ElementCollection;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import java.util.Map;
-
-@Entity
-public class Device {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    private String name;
-    private String type;
-    private boolean status;
-
-    @ElementCollection
-    private Map<String, String> settings;
-
-    @ManyToOne
-    @JsonIgnore
-    private User user;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public boolean isStatus() {
-        return status;
-    }
-
-    public void setStatus(boolean status) {
-        this.status = status;
-    }
-
-    public Map<String, String> getSettings() {
-        return settings;
-    }
-
-    public void setSettings(Map<String, String> settings) {
-        this.settings = settings;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-
-
-    
-}
-
-package com.examly.springapp.model;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import javax.persistence.*;
-import java.util.List;
-
-@Entity
-public class User {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    private String name;
-    private String email;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Device> devices;
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public List<Device> getDevices() {
-        return devices;
-    }
-
-    public void setDevices(List<Device> devices) {
-        this.devices = devices;
-    }
-
-    
-}
-
-
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.Device;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface DeviceRepository extends JpaRepository<Device, Integer> {
-}
-
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface UserRepository extends JpaRepository<User, Integer> {
-}
-
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.Device;
-import com.examly.springapp.model.User;
-import com.examly.springapp.repository.DeviceRepository;
-import com.examly.springapp.repository.UserRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-
-@Service
-public class DeviceService {
-
-    @Autowired
-    private DeviceRepository deviceRepository;
-
-    @Autowired
-    private UserRepository userRepository;
-
-    public Device createDevice(int userId, Device device) {
-
-        User obj = userRepository.findById(userId).orElse(null);
-
-        if(obj!=null)
-        {
-            device.setUser(obj);
-            obj.getDevices().add(device);
-            userRepository.save(obj);
-            deviceRepository.save(device);
-            return device;
-        }
-        return null;
-    }
-
-    public List<Device> getAllDevices() {
-        return deviceRepository.findAll();
-    }
-
-    public Device getDeviceById(int id) {
-
-        return deviceRepository.findById(id).orElse(null);
-    }
-
-    public List<Device> getDevicesByUserId(int userId) {
-        // Retrieve devices by user ID
-        Optional<User> optionalUser = userRepository.findById(userId);
-        if (optionalUser.isPresent()) {
-            User user = optionalUser.get();
-            return user.getDevices();
-        }
-        return Collections.emptyList(); // Return empty list if user not found or has no devices
-    }
-    
-
-    public Device updateDevice(int id, Device updatedDevice) {
-        Device device = deviceRepository.findById(id).orElse(null);
-        if (device != null) {
-            device.setName(updatedDevice.getName());
-            device.setType(updatedDevice.getType());
-            device.setStatus(updatedDevice.isStatus());
-            device.setSettings(updatedDevice.getSettings());
-            return deviceRepository.save(device);
-        }
-        return null;
-    }
-
-    public boolean toggleDeviceStatus(int id) {
-        Device device = deviceRepository.findById(id).orElse(null);
-        if (device != null) {
-            device.setStatus(!device.isStatus());
-            deviceRepository.save(device);
-            return true;
-        }
-        return false;
-    }
-
-    public Device updateDeviceSettings(int id, Device updatedDevice) {
-        Device device = deviceRepository.findById(id).orElse(null);
-        if (device != null) {
-            device.setSettings(updatedDevice.getSettings());
-            return deviceRepository.save(device);
-        }
-        return null;
-    }
-
-    public boolean deleteDevice(int id) {
-        if (deviceRepository.existsById(id)) {
-            deviceRepository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-}
-
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.User;
-import com.examly.springapp.repository.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-@Service
-public class UserService {
-
-    @Autowired
-    private UserRepository userRepository;
-
-    public User createUser(User user) {
-        return userRepository.save(user);
-    }
-
-    public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
-
-    public User getUserById(int id) {
-        return userRepository.findById(id).orElse(null);
-    }
-
-    public User updateUser(int id, User updatedUser) {
-        User user = userRepository.findById(id).orElse(null);
-        if (user != null) {
-            user.setName(updatedUser.getName());
-            user.setEmail(updatedUser.getEmail());
-            return userRepository.save(user);
-        }
-        return null;
-    }
-
-    public boolean deleteUser(int id) {
-        if (userRepository.existsById(id)) {
-            userRepository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-}
-
-ex no 6:
-
-Article:
-package com.examly.springapp.model;
-
-import java.util.Date;
-
-public class Article 
-{
-    private String author;
-    private String title;
-    private String description;
-    private String url;
-    private String urlToImage;
-    private Date publishedAt;
-    private String content;
-    private Source source;
-    public Article() {
-    }
-    public Article(String author, String title, String description, String url, String urlToImage, Date publishedAt,
-            String content, Source source) {
-        this.author = author;
-        this.title = title;
-        this.description = description;
-        this.url = url;
-        this.urlToImage = urlToImage;
-        this.publishedAt = publishedAt;
-        this.content = content;
-        this.source = source;
-    }
-    public String getAuthor() {
-        return author;
-    }
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-    public String getTitle() {
-        return title;
-    }
-    public void setTitle(String title) {
-        this.title = title;
-    }
-    public String getDescription() {
-        return description;
-    }
-    public void setDescription(String description) {
-        this.description = description;
-    }
-    public String getUrl() {
-        return url;
-    }
-    public void setUrl(String url) {
-        this.url = url;
-    }
-    public String getUrlToImage() {
-        return urlToImage;
-    }
-    public void setUrlToImage(String urlToImage) {
-        this.urlToImage = urlToImage;
-    }
-    public Date getPublishedAt() {
-        return publishedAt;
-    }
-    public void setPublishedAt(Date publishedAt) {
-        this.publishedAt = publishedAt;
-    }
-    public String getContent() {
-        return content;
-    }
-    public void setContent(String content) {
-        this.content = content;
-    }
-    public Source getSource() {
-        return source;
-    }
-    public void setSource(Source source) {
-        this.source = source;
-    }
-
-    
-}
-ApiReponse:
-package com.examly.springapp.model;
-
-public class ApiResponse 
-{
-    private Article[] articles;
-
-    public ApiResponse() {
-    }
-
-    public ApiResponse(Article[] articles) {
-        this.articles = articles;
-    }
-
-    public Article[] getArticles() {
-        return articles;
-    }
-
-    public void setArticles(Article[] articles) {
-        this.articles = articles;
-    }
-
-    
-}
-NewsService:
-package com.examly.springapp.service;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import com.examly.springapp.model.ApiResponse;
-
-@Service
-public class NewsService 
-{
-    @Value("${newsapi.apikey}")
-    private String apiKey;
-
-    private final RestTemplate restTemplate;
-
-    public NewsService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
-    public ApiResponse getNewsBySource(String source) {
-        String url = String.format("https://newsapi.org/v2/top-headlines?sources=%s&apiKey=%s", source, apiKey);
-        ResponseEntity<ApiResponse> response = restTemplate.getForEntity(url, ApiResponse.class);
-        return response.getBody();
-    }
-
-    public ApiResponse getNewsByCountryAndCategory(String country, String category) {
-        String url = String.format("https://newsapi.org/v2/top-headlines?country=%s&category=%s&apiKey=%s", country, category, apiKey);
-        ResponseEntity<ApiResponse> response = restTemplate.getForEntity(url, ApiResponse.class);
-        return response.getBody();
-    }
-
-    public ApiResponse getNewsByCountryCategoryWithPaginationAndSort(String country, String category, int pageNumber, int pageSize, String sortField) {
-        // This example URL does not directly support pagination and sorting as these features are not standard for the NewsAPI.
-        // Instead, this method demonstrates a placeholder for how you might structure the method. 
-        // You'll need to handle pagination and sorting manually within your application or use a different API if required.
-        String url = String.format("https://newsapi.org/v2/top-headlines?country=%s&category=%s&apiKey=%s", country, category, apiKey);
-        ResponseEntity<ApiResponse> response = restTemplate.getForEntity(url, ApiResponse.class);
-        return response.getBody(); // Remember to adjust this method based on your actual pagination and sorting logic.
-    }
-}
-NewsController:
-package com.examly.springapp.controller;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.examly.springapp.model.ApiResponse;
-import com.examly.springapp.service.NewsService;
-
-
-@RestController
-@RequestMapping("/news")
-public class NewsController 
-{
-    @Autowired
-    private NewsService newsService;
-
-    @GetMapping("/source/{source}")
-    public ResponseEntity<ApiResponse> getNewsBySource(@PathVariable String source) {
-        ApiResponse apiResponse = newsService.getNewsBySource(source);
-        if (apiResponse == null || apiResponse.getArticles() == null || apiResponse.getArticles().length == 0) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(apiResponse);
-    }
-
-    @GetMapping("/country/{country}/category/{category}")
-    public ResponseEntity<ApiResponse> getNewsByCountryAndCategory(@PathVariable String country, @PathVariable String category) {
-        ApiResponse apiResponse = newsService.getNewsByCountryAndCategory(country, category);
-        if (apiResponse == null || apiResponse.getArticles() == null || apiResponse.getArticles().length == 0) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(apiResponse);
-    }
-
-    @GetMapping("/country/{country}/category/{category}/{pageNumber}/{pageSize}/{sortField}")
-    public ResponseEntity<ApiResponse> getNewsByCountryCategoryWithPaginationAndSort(@PathVariable String country, @PathVariable String category, @PathVariable int pageNumber, @PathVariable int pageSize, @PathVariable String sortField) {
-        ApiResponse apiResponse = newsService.getNewsByCountryCategoryWithPaginationAndSort(country, category, pageNumber, pageSize, sortField);
-        if (apiResponse == null || apiResponse.getArticles() == null || apiResponse.getArticles().length == 0) {
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok(apiResponse);
-    }
-}
-AppConfig:
-package com.examly.springapp.configuration;
-
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.web.client.RestTemplate;
-
-@Configuration
-public class AppConfig 
-{
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
-}
-Source:
-package com.examly.springapp.model;
-
-public class Source 
-{
-    private String id;
-    private String name;
-    public Source() {
-    }
-    public Source(String id, String name) {
-        this.id = id;
-        this.name = name;
-    }
-    public String getId() {
-        return id;
-    }
-    public void setId(String id) {
-        this.id = id;
-    }
-    public String getName() {
-        return name;
-    }
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    
-}
-
-ex no 7:
-
-
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.Employee;
-import com.examly.springapp.service.EmployeeService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@RestController
-@RequestMapping("/employees")
-public class EmployeeController {
-
-    @Autowired
-    private EmployeeService employeeService;
-
-    @PostMapping
-    public ResponseEntity<Employee> addEmployee(@RequestBody Employee employee) {
-        return new ResponseEntity<>(employeeService.saveEmployee(employee), HttpStatus.CREATED);
-    }
-
-    @GetMapping("/containing/{searchTerm}")
-    public ResponseEntity<List<Employee>> getEmployeesContaining(@PathVariable String searchTerm) {
-        return new ResponseEntity<>(employeeService.getEmployeesContaining(searchTerm), HttpStatus.OK);
-    }
-
-    @GetMapping("/startsWith/{name}")
-    public ResponseEntity<List<Employee>> getEmployeesStartingWith(@PathVariable String name) {
-        return new ResponseEntity<>(employeeService.getEmployeesStartingWith(name), HttpStatus.OK);
-    }
-
-    @GetMapping("/endsWith/{name}")
-    public ResponseEntity<List<Employee>> getEmployeesEndingWith(@PathVariable String name) {
-        return new ResponseEntity<>(employeeService.getEmployeesEndingWith(name), HttpStatus.OK);
-    }
-
-    @GetMapping("/contains/{designation}")
-    public ResponseEntity<List<Employee>> getEmployeesContains(@PathVariable String designation) {
-        return new ResponseEntity<>(employeeService.getEmployeesContains(designation), HttpStatus.OK);
-    }
-
-    @GetMapping("/isContaining/{name}")
-    public ResponseEntity<List<Employee>> getEmployeesIsContaining(@PathVariable String name) {
-        return new ResponseEntity<>(employeeService.getEmployeesIsContaining(name), HttpStatus.OK);
-    }
-}
-
-package com.examly.springapp.model;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-
-@Entity
-public class Employee {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private String name;
-    private String designation;
-
-    public Employee() {
-    }
-
-    public Employee(String name, String designation) {
-        this.name = name;
-        this.designation = designation;
-    }
-
-    // Getters and setters
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDesignation() {
-        return designation;
-    }
-
-    public void setDesignation(String designation) {
-        this.designation = designation;
-    }
-}
-
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.Employee;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-import java.util.List;
-
-@Repository
-public interface EmployeeRepo extends JpaRepository<Employee, Integer> {
-    List<Employee> findByNameContainingIgnoreCaseOrDesignationContainingIgnoreCase(String name, String designation);
-
-    List<Employee> findByNameStartingWithIgnoreCase(String name);
-
-    List<Employee> findByNameEndingWithIgnoreCase(String name);
-
-    List<Employee> findByDesignationContainingIgnoreCase(String designation);
-
-    List<Employee> findByNameIsContainingIgnoreCase(String name);
-}
-
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.Employee;
-import com.examly.springapp.repository.EmployeeRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-@Service
-public class EmployeeService {
-
-    @Autowired
-    private EmployeeRepo employeeRepo;
-
-    public Employee saveEmployee(Employee employee) {
-        return employeeRepo.save(employee);
-    }
-
-    public List<Employee> getEmployeesContaining(String searchTerm) {
-        return employeeRepo.findByNameContainingIgnoreCaseOrDesignationContainingIgnoreCase(searchTerm, searchTerm);
-    }
-
-    public List<Employee> getEmployeesStartingWith(String name) {
-        return employeeRepo.findByNameStartingWithIgnoreCase(name);
-    }
-
-    public List<Employee> getEmployeesEndingWith(String name) {
-        return employeeRepo.findByNameEndingWithIgnoreCase(name);
-    }
-
-    public List<Employee> getEmployeesContains(String designation) {
-        return employeeRepo.findByDesignationContainingIgnoreCase(designation);
-    }
-
-    public List<Employee> getEmployeesIsContaining(String name) {
-        return employeeRepo.findByNameIsContainingIgnoreCase(name);
-    }
-}
-
-ex no 8:
-
-Day 9 CY2
-
-package com.examly.springapp.model;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-
-@Entity
-public class Employee {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private String name;
-    private String designation;
-
-    public Employee() {
-    }
-
-    public Employee(int id, String name, String designation) {
-        this.id = id;
-        this.name = name;
-        this.designation = designation;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDesignation() {
-        return designation;
-    }
-
-    public void setDesignation(String designation) {
-        this.designation = designation;
-    }
-
-   
-}
-
-
-// EmployeeController.java
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.Employee;
-import com.examly.springapp.service.EmployeeService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@RestController
-@RequestMapping("/employees")
-public class EmployeeController {
-    @Autowired
-    private  EmployeeService employeeService;
-
-    @PostMapping
-    public ResponseEntity<?>create(@RequestBody Employee emp)
-    {
-        try{
-            return new ResponseEntity<>(employeeService.create(emp),HttpStatus.CREATED);
-        }catch(Exception e)
-        {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Employee>> getAllEmployees() {
-        List<Employee> employees = employeeService.getAllEmployees();
-        return new ResponseEntity<>(employees, HttpStatus.OK);
-    }
-
-    @GetMapping("/notContaining/{name}")
-    public ResponseEntity<List<Employee>> getEmployeesNotContainingName(@PathVariable String name) {
-        List<Employee> employees = employeeService.getEmployeesNotContainingName(name);
-        return new ResponseEntity<>(employees, HttpStatus.OK);
-    }
-
-    @GetMapping("/notContains/{designation}")
-    public ResponseEntity<List<Employee>> getEmployeesNotContainingDesignation(@PathVariable String designation) {
-        List<Employee> employees = employeeService.getEmployeesNotContainingDesignation(designation);
-        return new ResponseEntity<>(employees, HttpStatus.OK);
-    }
-
-    @GetMapping("/notLike/{searchTerm}")
-    public ResponseEntity<List<Employee>> getEmployeesNotLike(@PathVariable String searchTerm) {
-        List<Employee> employees = employeeService.getEmployeesNotLike(searchTerm);
-        return new ResponseEntity<>(employees, HttpStatus.OK);
-    }
-
-}
-
-
-
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.Employee;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Repository;
-
-import java.util.List;
-
-@Repository
-public interface EmployeeRepo extends JpaRepository<Employee, Integer> {
-    List<Employee> findByNameNotContaining(String name);
-    List<Employee> findByDesignationNotContaining(String designation);
-    // List<Employee> findByNameNotLikeOrDesignationNotLike(String name, String designation);
-    //List<Employee> findByNameNotContainingOrDesignationNotContaining(String name, String designation);
-    @Query("SELECT e FROM Employee e WHERE e.name NOT LIKE %:searchTerm% OR e.designation NOT LIKE %:searchTerm%")
-    List<Employee> findEmployeesNotLikeSearchTerm(String searchTerm);
-    
-}
-
-
-
-
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.Employee;
-import com.examly.springapp.repository.EmployeeRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-@Service
-public class EmployeeService {
-    private final EmployeeRepo employeeRepo;
-
-    @Autowired
-    public EmployeeService(EmployeeRepo employeeRepo) {
-        this.employeeRepo = employeeRepo;
-    }
-
-    public List<Employee> getAllEmployees() {
-        return employeeRepo.findAll();
-    }
-
-    public List<Employee> getEmployeesNotContainingName(String name) {
-        return employeeRepo.findByNameNotContaining(name);
-    }
-    
-
-    public List<Employee> getEmployeesNotContainingDesignation(String designation) {
-        return employeeRepo.findByDesignationNotContaining(designation);
-    }
-
-    // public List<Employee> getEmployeesNotLike(String searchTerm) {
-    //     return employeeRepo.findByNameNotLikeOrDesignationNotLike(searchTerm, searchTerm);
-    // }
-   
-    // public List<Employee> getEmployeesNotLike(String searchTerm) {
-    //     return employeeRepo.findByNameNotContainingOrDesignationNotContaining(searchTerm, searchTerm);
-    // }
-    public List<Employee> getEmployeesNotLike(String searchTerm) {
-        return employeeRepo.findEmployeesNotLikeSearchTerm(searchTerm);
-    }
-    public Employee create(Employee emp) {
-        return employeeRepo.save(emp); 
-    }
-}
-
-ex no 9:
-
-11.Assest Tracking
-Asset:
-package com.examly.springapp.model;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToOne;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-@Entity
-public class Asset {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private String name;
-    private String description;
-    private double value;
-
-    @OneToOne(mappedBy = "asset")
-    @JsonIgnore
-    private Owner owner;
-
-    public Asset() {}
-
-    public Asset(String name, String description, double value) {
-        this.name = name;
-        this.description = description;
-        this.value = value;
-    }
-
-    // Getters and setters
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public double getValue() {
-        return value;
-    }
-
-    public void setValue(double value) {
-        this.value = value;
-    }
-
-    public Owner getOwner() {
-        return owner;
-    }
-
-    public void setOwner(Owner owner) {
-        this.owner = owner;
-    }
-}
-
-Owner:
-package com.examly.springapp.model;
-
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-
-@Entity
-public class Owner {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private String name;
-    private String email;
-    private String address;
-
-    @OneToOne
-    @JoinColumn(name = "asset_id")
-    private Asset asset;
-
-    public Owner() {}
-
-    public Owner(String name, String email, String address) {
-        this.name = name;
-        this.email = email;
-        this.address = address;
-    }
-
-    // Getters and setters
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getAddress() {
-        return address;
-    }
-
-    public void setAddress(String address) {
-        this.address = address;
-    }
-
-    public Asset getAsset() {
-        return asset;
-    }
-
-    public void setAsset(Asset asset) {
-        this.asset = asset;
-    }
-}
-
-AssetController:
-package com.examly.springapp.controller;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.examly.springapp.model.Asset;
-import com.examly.springapp.service.AssetService;
-
-@RestController
-@RequestMapping("/assets")
-public class AssetController {
-    private final AssetService assetService;
-
-    @Autowired
-    public AssetController(AssetService assetService) {
-        this.assetService = assetService;
-    }
-
-    @PostMapping
-    public ResponseEntity<Asset> createAsset(@RequestBody Asset asset) {
-        Asset createdAsset = assetService.saveAsset(asset);
-        return new ResponseEntity<>(createdAsset, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Asset> getAssetById(@PathVariable int id) {
-        Asset asset = assetService.getAssetById(id);
-        if (asset == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(asset, HttpStatus.OK);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Asset> updateAsset(@PathVariable int id, @RequestBody Asset asset) {
-        Asset existingAsset = assetService.getAssetById(id);
-        if (existingAsset == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        // Update fields
-        existingAsset.setName(asset.getName());
-        existingAsset.setDescription(asset.getDescription());
-        existingAsset.setValue(asset.getValue());
-
-        Asset updatedAsset = assetService.saveAsset(existingAsset);
-        return new ResponseEntity<>(updatedAsset, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteAsset(@PathVariable int id) {
-        Asset asset = assetService.getAssetById(id);
-        if (asset == null) {
-            return new ResponseEntity<>("Asset not found with ID: " + id, HttpStatus.NOT_FOUND);
-        }
-        assetService.deleteAssetById(id);
-        return new ResponseEntity<>("Asset deleted successfully", HttpStatus.OK);
-    }
-}
-
-OwnerController:
-package com.examly.springapp.controller;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-
-import com.examly.springapp.model.Owner;
-import com.examly.springapp.service.OwnerService;
-
-@RestController
-@RequestMapping("/owners")
-public class OwnerController {
-    private final OwnerService ownerService;
-
-    @Autowired
-    public OwnerController(OwnerService ownerService) {
-        this.ownerService = ownerService;
-    }
-
-    @PostMapping("/asset/{assetid}")
-    public ResponseEntity<Owner> mapOwnerToAsset(@PathVariable("assetid") int assetId, @RequestBody Owner owner) {
-        // You can implement the mapping logic here
-        // Assuming the mapping logic is implemented elsewhere
-        Owner mappedOwner = ownerService.saveOwner(owner);
-        return new ResponseEntity<>(mappedOwner, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Owner> getOwnerById(@PathVariable int id) {
-        Owner owner = ownerService.getOwnerById(id);
-        if (owner == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(owner, HttpStatus.OK);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Owner> updateOwner(@PathVariable int id, @RequestBody Owner owner) {
-        Owner existingOwner = ownerService.getOwnerById(id);
-        if (existingOwner == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-
-        // Update fields
-        existingOwner.setName(owner.getName());
-        existingOwner.setEmail(owner.getEmail());
-        existingOwner.setAddress(owner.getAddress());
-
-        Owner updatedOwner = ownerService.saveOwner(existingOwner);
-        return new ResponseEntity<>(updatedOwner, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteOwner(@PathVariable int id) {
-        Owner owner = ownerService.getOwnerById(id);
-        if (owner == null) {
-            return new ResponseEntity<>("Owner not found with ID: " + id, HttpStatus.NOT_FOUND);
-        }
-        ownerService.deleteOwnerById(id);
-        return new ResponseEntity<>("Owner deleted successfully", HttpStatus.OK);
-    }
-}
-
-
-AssetRepository:
-package com.examly.springapp.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.examly.springapp.model.Asset;
-
-public interface AssetRepository extends JpaRepository<Asset, Integer> {
-}
-
-
-OwnerRepository:
-package com.examly.springapp.repository;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-
-import com.examly.springapp.model.Owner;
-
-public interface OwnerRepository extends JpaRepository<Owner, Integer> {
-}
-
-AssetService:
-package com.examly.springapp.service;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.examly.springapp.model.Asset;
-import com.examly.springapp.repository.AssetRepository;
-
-@Service
-public class AssetService {
-    private final AssetRepository assetRepository;
-
-    @Autowired
-    public AssetService(AssetRepository assetRepository) {
-        this.assetRepository = assetRepository;
-    }
-
-    public Asset saveAsset(Asset asset) {
-        return assetRepository.save(asset);
-    }
-
-    public Asset getAssetById(int id) {
-        return assetRepository.findById(id).orElse(null);
-    }
-
-    public void deleteAssetById(int id) {
-        assetRepository.deleteById(id);
-    }
-}
-
-OwnerService:
-package com.examly.springapp.service;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import com.examly.springapp.model.Owner;
-import com.examly.springapp.repository.OwnerRepository;
-
-@Service
-public class OwnerService {
-    private final OwnerRepository ownerRepository;
-
-    @Autowired
-    public OwnerService(OwnerRepository ownerRepository) {
-        this.ownerRepository = ownerRepository;
-    }
-
-    public Owner saveOwner(Owner owner) {
-        return ownerRepository.save(owner);
-    }
-
-    public Owner getOwnerById(int id) {
-        return ownerRepository.findById(id).orElse(null);
-    }
-
-    public void deleteOwnerById(int id) {
-        ownerRepository.deleteById(id);
-    }
-}
-
-ex no 10:
-
-
-10.Finance (Transaction)
-finance lab problem:
-
-usercontroller:
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.User;
-import com.examly.springapp.service.UserService;
-
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-@RestController
-@RequestMapping("/users")
-public class UserController {
-
-    @Autowired
-    private UserService userService;
-
-    @PostMapping
-    public ResponseEntity<User> createUser(@RequestBody User user) {
-        User createdUser = userService.createUser(user);
-        return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(@PathVariable("id") int id) {
-        Optional<User> userOptional = userService.getUserById(id);
-    if (userOptional.isPresent()) {
-        User user = userOptional.get();
-        return new ResponseEntity<>(user, HttpStatus.OK);
-    } else {
-        return new ResponseEntity<>(HttpStatus.OK);
-    }
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<User> updateUser(@PathVariable("id") int id, @RequestBody User user) {
-        User updatedUser = userService.updateUser(id, user);
-        if (updatedUser == null) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<>(updatedUser, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteUser(@PathVariable("id") int id) {
-        boolean deleted = userService.deleteUser(id);
-        if (!deleted) {
-            return new ResponseEntity<>("User not found with ID: " + id, HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>("User deleted successfully", HttpStatus.OK);
-    }
-}
-
-
-transaction controller:
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.Transaction;
-import com.examly.springapp.service.TransactionService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@RestController
-@RequestMapping("/transactions")
-public class TransactionController {
-
-    @Autowired
-    private TransactionService transactionService;
-
-    @PostMapping("/user/{userId}")
-    public ResponseEntity<Transaction> createTransactionForUser(@PathVariable("userId") int userId, @RequestBody Transaction transaction) {
-        Transaction createdTransaction = transactionService.createTransactionForUser(userId, transaction);
-        return new ResponseEntity<>(createdTransaction, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Transaction> getTransactionById(@PathVariable("id") int id) {
-        Transaction transaction = transactionService.getTransactionById(id);
-        if (transaction == null) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(transaction, HttpStatus.OK);
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<Transaction>> getTransactionsByUserId(@PathVariable("userId") int userId) {
-        List<Transaction> transactions = transactionService.getTransactionsByUserId(userId);
-        if (transactions == null || transactions.isEmpty()) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>(transactions, HttpStatus.OK);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Transaction> updateTransaction(@PathVariable("id") int id, @RequestBody Transaction transaction) {
-        Transaction updatedTransaction = transactionService.updateTransaction(id, transaction);
-        if (updatedTransaction == null) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-        return new ResponseEntity<>(updatedTransaction, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteTransaction(@PathVariable("id") int id) {
-        boolean deleted = transactionService.deleteTransaction(id);
-        if (!deleted) {
-            return new ResponseEntity<>("Transaction not found with ID: " + id, HttpStatus.NOT_FOUND);
-        }
-        return new ResponseEntity<>("Transaction deleted successfully", HttpStatus.OK);
-    }
-}
-
-
-user:
-package com.examly.springapp.model;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import javax.persistence.*;
-import java.util.List;
-
-@Entity
-public class User {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    private String username;
-    private String email;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Transaction> transactions;
-
-    public User() {
-    }
-
-    public User(String username, String email) {
-        this.username = username;
-        this.email = email;
-    }
-
-    // Getters and setters
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public List<Transaction> getTransactions() {
-        return transactions;
-    }
-
-    public void setTransactions(List<Transaction> transactions) {
-        this.transactions = transactions;
-    }
-}
-
-
-transaction:
-package com.examly.springapp.model;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import javax.persistence.*;
-
-@Entity
-public class Transaction {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-
-    private String type;
-    private double amount;
-    private String description;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    @JsonIgnore
-    private User user;
-
-    public Transaction() {
-    }
-
-    public Transaction(String type, double amount, String description) {
-        this.type = type;
-        this.amount = amount;
-        this.description = description;
-    }
-
-    // Getters and setters
-
-    public int getId() {
-        return id;
-    }
-
-    public void setId(int id) {
-        this.id = id;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public double getAmount() {
-        return amount;
-    }
-
-    public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public User getUser() {
-        return user;
-    }
-
-    public void setUser(User user) {
-        this.user = user;
-    }
-}
-
-
-userrepo:
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.User;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface UserRepository extends JpaRepository<User, Integer> {
-}
-
-
-transaction repo:
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.Transaction;
-
-import java.util.List;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface TransactionRepository extends JpaRepository<Transaction, Integer> {
-
-    List<Transaction> findByUserId(int userId);
-}
-
-
-userservice:
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.Transaction;
-import com.examly.springapp.model.User;
-import com.examly.springapp.repository.UserRepository;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-@Service
-public class UserService {
-
-    
-    @Autowired
-    UserRepository userRepository;
-   
-
-    public User createUser(User user) {
-        return userRepository.save(user);
-    }
-
-    public Optional<User> getUserById(int id) {
-        return userRepository.findById(id);
-    }
-
-    public User updateUser(int id, User user) {
-        if (userRepository.existsById(id)) {
-            user.setId(id);
-            return userRepository.save(user);
-        }
-        return null;
-    }
-
-    public boolean deleteUser(int id) {
-        if (userRepository.existsById(id)) {
-            userRepository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-}
-
-
-transaction service:
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.Transaction;
-import com.examly.springapp.model.User;
-import com.examly.springapp.repository.TransactionRepository;
-import com.examly.springapp.repository.UserRepository;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
-
-@Service
-public class TransactionService {
-
-    
-    @Autowired
-     TransactionRepository transactionRepository;
-
-    @Autowired
-    UserRepository userRepository;
-    
-
-    public Transaction createTransactionForUser(int userId, Transaction transaction) {
-        User user = userRepository.findById(userId).orElse(null);
-        if (user != null) {
-            transaction.setUser(user);
-            return transactionRepository.save(transaction);
-        }
-        return null;
-    }
-
-    public Transaction getTransactionById(int id) {
-        return transactionRepository.findById(id).orElse(null);
-    }
-
-    public List<Transaction> getTransactionsByUserId(int userId) {
-        return transactionRepository.findByUserId(userId);
-    }
-
-    public Transaction updateTransaction(int id, Transaction transaction) {
-        if (transactionRepository.existsById(id)) {
-            transaction.setId(id);
-            return transactionRepository.save(transaction);
-        }
-        return null;
-    }
-
-    public boolean deleteTransaction(int id) {
-        if (transactionRepository.existsById(id)) {
-            transactionRepository.deleteById(id);
-            return true;
-        }
-        return false;
-    }
-}
-
-ex no 11:
-
-Day 11a  CY
-SKG_LIBRARY_MANAGEMENT:
-Library Management:
-
-Member Controller:
-
-// MemberController.java
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.Member;
-import com.examly.springapp.service.MemberService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-
-@RestController
-@RequestMapping("/members")
-public class MemberController {
-    @Autowired
-    private MemberService memberService;
-
-    @PostMapping
-    public ResponseEntity<Member> addMember(@RequestBody Member member) {
-        Member newMember = memberService.addMember(member);
-        return new ResponseEntity<>(newMember, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<Member> getMemberById(@PathVariable("id") int id) {
-        Member member = memberService.getMemberById(id);
-        return new ResponseEntity<>(member, HttpStatus.OK);
-    }
-
-    @GetMapping
-    public ResponseEntity<List<Member>> getAllMembers() {
-        List<Member> members = memberService.getAllMembers();
-        return new ResponseEntity<>(members, HttpStatus.OK);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<Member> updateMember(@PathVariable("id") int id, @RequestBody Member member) {
-        if (member.getId() != id) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        Member updatedMember = memberService.updateMember(member);
-        return new ResponseEntity<>(updatedMember, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteMember(@PathVariable("id") int id) {
-        memberService.deleteMember(id);
-        return new ResponseEntity<>("The Member Deleted Successfully", HttpStatus.OK);
-    }
-}
-
-
-MembershipCard Controller:
-
-// MembershipCardController.java
-package com.examly.springapp.controller;
-
-import com.examly.springapp.model.MembershipCard;
-import com.examly.springapp.service.MembershipService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-@RestController
-@RequestMapping("/membership-cards")
-public class MembershipCardController {
-    @Autowired
-    private MembershipService membershipService;
-
-    @PostMapping("/member/{id}")
-    public ResponseEntity<MembershipCard> addMembership(@PathVariable("id") int memberId, @RequestBody MembershipCard membershipCard) {
-        MembershipCard newMembership = membershipService.addMembership(membershipCard);
-        return new ResponseEntity<>(newMembership, HttpStatus.CREATED);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<MembershipCard> getMembershipById(@PathVariable("id") int id) {
-        MembershipCard membershipCard = membershipService.getMembershipById(id);
-        return new ResponseEntity<>(membershipCard, HttpStatus.OK);
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<MembershipCard> updateMembership(@PathVariable("id") int id, @RequestBody MembershipCard membershipCard) {
-        if (membershipCard.getId() != id) {
-            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-        }
-        MembershipCard updatedMembership = membershipService.updateMembership(membershipCard);
-        return new ResponseEntity<>(updatedMembership, HttpStatus.OK);
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<String> deleteMembership(@PathVariable("id") int id) {
-        membershipService.deleteMembership(id);
-        return new ResponseEntity<>("Membership Card Deleted Successfully", HttpStatus.OK);
-    }
-}
-
-
-Member model:
-
-// Member.java
-package com.examly.springapp.model;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import javax.persistence.*;
-
-@Entity
-public class Member {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private String name;
-    private String email;
-
-    @OneToOne(mappedBy = "member")
-    @JsonIgnore
-    private MembershipCard membershipCard;
-
-    // Constructors
-    public Member() {}
-
-    public Member(String name, String email) {
-        this.name = name;
-        this.email = email;
-    }
-
-    // Getters and setters
-    // Id
-    public int getId() {
-        return id;
-    }
-
-    // Name
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    // Email
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    // MembershipCard
-    public MembershipCard getMembershipCard() {
-        return membershipCard;
-    }
-
-    public void setMembershipCard(MembershipCard membershipCard) {
-        this.membershipCard = membershipCard;
-    }
-}
-
-
-Membershipcard model:
-
-// MembershipCard.java
-package com.examly.springapp.model;
-
-import javax.persistence.*;
-import java.time.LocalDate;
-
-@Entity
-public class MembershipCard {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private int id;
-    private String cardNumber;
-    private LocalDate expirationDate;
-
-    @OneToOne
-    @JoinColumn(name = "member_id")
-    private Member member;
-
-    // Constructors
-    public MembershipCard() {}
-
-    public MembershipCard(String cardNumber, LocalDate expirationDate) {
-        this.cardNumber = cardNumber;
-        this.expirationDate = expirationDate;
-    }
-
-    // Getters and setters
-    // Id
-    public int getId() {
-        return id;
-    }
-
-    // CardNumber
-    public String getCardNumber() {
-        return cardNumber;
-    }
-
-    public void setCardNumber(String cardNumber) {
-        this.cardNumber = cardNumber;
-    }
-
-    // ExpirationDate
-    public LocalDate getExpirationDate() {
-        return expirationDate;
-    }
-
-    public void setExpirationDate(LocalDate expirationDate) {
-        this.expirationDate = expirationDate;
-    }
-
-    // Member
-    public Member getMember() {
-        return member;
-    }
-
-    public void setMember(Member member) {
-        this.member = member;
-    }
-}
-
-
-
-
-Member Repo:
-
-// MemberRepo.java
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.Member;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface MemberRepo extends JpaRepository<Member, Integer> {
-}
-
-
-MembershipCard Repo:
-
-// MembershipRepo.java
-package com.examly.springapp.repository;
-
-import com.examly.springapp.model.MembershipCard;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.stereotype.Repository;
-
-@Repository
-public interface MembershipRepo extends JpaRepository<MembershipCard, Integer> {
-}
-
-
-Member Service:
-
-// MemberService.java
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.Member;
-import com.examly.springapp.repository.MemberRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import java.util.List;
-
-@Service
-public class MemberService {
-    @Autowired
-    private MemberRepo memberRepo;
-
-    public Member addMember(Member member) {
-        return memberRepo.save(member);
-    }
-
-    public Member getMemberById(int id) {
-        return memberRepo.findById(id).orElse(null);
-    }
-
-    public List<Member> getAllMembers() {
-        return memberRepo.findAll();
-    }
-
-    public Member updateMember(Member member) {
-        return memberRepo.save(member);
-    }
-
-    public void deleteMember(int id) {
-        memberRepo.deleteById(id);
-    }
-}
-
-MembershipCard Service:
-
-// MembershipService.java
-package com.examly.springapp.service;
-
-import com.examly.springapp.model.MembershipCard;
-import com.examly.springapp.repository.MembershipRepo;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-import java.util.Optional;
-
-@Service
-public class MembershipService {
-    @Autowired
-    private MembershipRepo membershipRepo;
-
-    public MembershipCard addMembership(MembershipCard membershipCard) {
-        return membershipRepo.save(membershipCard);
-    }
-
-    public MembershipCard getMembershipById(int id) {
-        Optional<MembershipCard> optionalMembershipCard = membershipRepo.findById(id);
-        return optionalMembershipCard.orElse(null);
-    }
-
-    public MembershipCard updateMembership(MembershipCard membershipCard) {
-        return membershipRepo.save(membershipCard);
-    }
-
-    public void deleteMembership(int id) {
-        membershipRepo.deleteById(id);
-    }
-}
+
+Machine Learning
+What is Machine Learning? Definition, Types, Tools & More
+Find out everything you need to know about machine learning in 2023, including its types, uses, careers, and how to get started in the industry.
+
+Machine Learning Concept
+
+In this era of digital transformation, understanding the technologies that drive innovation is no longer a luxury but a necessity. One technology that has been at the forefront of this transformation is machine learning. This article aims to demystify machine learning, providing a comprehensive guide for beginners and enthusiasts alike. We will delve into the definition of machine learning, its types, applications, and the tools used in the field. We will also explore the various career paths in machine learning and provide guidance on how to start your journey in this exciting field.
+
+What is Machine Learning?
+Machine Learning, often abbreviated as ML, is a subset of artificial intelligence (AI) that focuses on the development of computer algorithms that improve automatically through experience and by the use of data. In simpler terms, machine learning enables computers to learn from data and make decisions or predictions without being explicitly programmed to do so.
+
+At its core, machine learning is all about creating and implementing algorithms that facilitate these decisions and predictions. These algorithms are designed to improve their performance over time, becoming more accurate and effective as they process more data.
+
+In traditional programming, a computer follows a set of predefined instructions to perform a task. However, in machine learning, the computer is given a set of examples (data) and a task to perform, but it's up to the computer to figure out how to accomplish the task based on the examples it's given.
+
+For instance, if we want a computer to recognize images of cats, we don't provide it with specific instructions on what a cat looks like. Instead, we give it thousands of images of cats and let the machine learning algorithm figure out the common patterns and features that define a cat. Over time, as the algorithm processes more images, it gets better at recognizing cats, even when presented with images it has never seen before.
+
+This ability to learn from data and improve over time makes machine learning incredibly powerful and versatile. It's the driving force behind many of the technological advancements we see today, from voice assistants and recommendation systems to self-driving cars and predictive analytics.
+
+Machine learning vs AI vs deep learning
+Machine learning is often confused with artificial intelligence or deep learning. Let's take a look at how these terms differ from one another. For a more in-depth look, check out our comparison guides on AI vs machine learning and machine learning vs deep learning. 
+
+AI refers to the development of programs that behave intelligently and mimic human intelligence through a set of algorithms. The field focuses on three skills: learning, reasoning, and self-correction to obtain maximum efficiency. AI can refer to either machine learning-based programs or even explicitly programmed computer programs.
+
+Machine learning is a subset of AI, which uses algorithms that learn from data to make predictions. These predictions can be generated through supervised learning, where algorithms learn patterns from existing data, or unsupervised learning, where they discover general patterns in data. ML models can predict numerical values based on historical data, categorize events as true or false, and cluster data points based on commonalities.
+
+Deep learning, on the other hand, is a subfield of machine learning dealing with algorithms based essentially on multi-layered artificial neural networks (ANN) that are inspired by the structure of the human brain.
+
+Unlike conventional machine learning algorithms, deep learning algorithms are less linear, more complex, and hierarchical, capable of learning from enormous amounts of data, and able to produce highly accurate results. Language translation, image recognition, and personalized medicines are some examples of deep learning applications.
+
+Comparing different industry terms
+
+Comparing different industry terms
+
+The Importance of Machine Learning
+In the 21st century, data is the new oil, and machine learning is the engine that powers this data-driven world. It is a critical technology in today's digital age, and its importance cannot be overstated. This is reflected in the industry's projected growth, with the US Bureau of Labor Statistics predicting a 21% growth in jobs between 2021 and 2031.
+
+Here are some reasons why it’s so essential in the modern world:
+
+Data processing. One of the primary reasons machine learning is so important is its ability to handle and make sense of large volumes of data. With the explosion of digital data from social media, sensors, and other sources, traditional data analysis methods have become inadequate. Machine learning algorithms can process these vast amounts of data, uncover hidden patterns, and provide valuable insights that can drive decision-making.
+Driving innovation. Machine learning is driving innovation and efficiency across various sectors. Here are a few examples:
+Healthcare. Algorithms are used to predict disease outbreaks, personalize patient treatment plans, and improve medical imaging accuracy.
+Finance. Machine learning is used for credit scoring, algorithmic trading, and fraud detection.
+Retail. Recommendation systems, supply chains, and customer service can all benefit from machine learning.
+The techniques used also find applications in sectors as diverse as agriculture, education, and entertainment.
+Enabling automation. Machine learning is a key enabler of automation. By learning from data and improving over time, machine learning algorithms can perform previously manual tasks, freeing humans to focus on more complex and creative tasks. This not only increases efficiency but also opens up new possibilities for innovation.
+How Does Machine Learning Work?
+Understanding how machine learning works involves delving into a step-by-step process that transforms raw data into valuable insights. Let's break down this process:
+
+A beginner's guide to the Machine Learning Workflow
+
+See the full workflow here
+
+Step 1: Data collection
+The first step in the machine learning process is data collection. Data is the lifeblood of machine learning - the quality and quantity of your data can directly impact your model's performance. Data can be collected from various sources such as databases, text files, images, audio files, or even scraped from the web.
+
+Once collected, the data needs to be prepared for machine learning. This process involves organizing the data in a suitable format, such as a CSV file or a database, and ensuring that the data is relevant to the problem you're trying to solve.
+
+Step 2: Data preprocessing
+Data preprocessing is a crucial step in the machine learning process. It involves cleaning the data (removing duplicates, correcting errors), handling missing data (either by removing it or filling it in), and normalizing the data (scaling the data to a standard format).
+
+Preprocessing improves the quality of your data and ensures that your machine learning model can interpret it correctly. This step can significantly improve the accuracy of your model. Our course, Preprocessing for Machine Learning in Python, explores how to get your cleaned data ready for modeling.
+
+Step 3: Choosing the right model
+Once the data is prepared, the next step is to choose a machine learning model. There are many types of models to choose from, including linear regression, decision trees, and neural networks. The choice of model depends on the nature of your data and the problem you're trying to solve.
+
+Factors to consider when choosing a model include the size and type of your data, the complexity of the problem, and the computational resources available. You can read more about the different machine learning models in a separate article.
+
+Step 4: Training the model
+After choosing a model, the next step is to train it using the prepared data. Training involves feeding the data into the model and allowing it to adjust its internal parameters to better predict the output.
+
+During training, it's important to avoid overfitting (where the model performs well on the training data but poorly on new data) and underfitting (where the model performs poorly on both the training data and new data). You can learn more about the full machine learning process in our Machine Learning Fundamentals with Python skill track, which explores the essential concepts and how to apply them.
+
+Step 5: Evaluating the model
+Once the model is trained, it's important to evaluate its performance before deploying it. This involves testing the model on new data it hasn't seen during training.
+
+Common metrics for evaluating a model's performance include accuracy (for classification problems), precision and recall (for binary classification problems), and mean squared error (for regression problems). We cover this evaluation process in more detail in our Responsible AI webinar.
+
+Step 6: Hyperparameter tuning and optimization
+After evaluating the model, you may need to adjust its hyperparameters to improve its performance. This process is known as parameter tuning or hyperparameter optimization.
+
+Techniques for hyperparameter tuning include grid search (where you try out different combinations of parameters) and cross validation (where you divide your data into subsets and train your model on each subset to ensure it performs well on different data).
+
+We have a separate article on hyperparameter optimization in machine learning models, which covers the topic in more detail.
+
+Step 7: Predictions and deployment
+Once the model is trained and optimized, it's ready to make predictions on new data. This process involves feeding new data into the model and using the model's output for decision-making or further analysis.
+
+Deploying the model involves integrating it into a production environment where it can process real-world data and provide real-time insights. This process is often known as MLOps. Discover more about MLOps in a separate tutorial.
+
+Types of Machine Learning
+Machine learning can be broadly classified into three types based on the nature of the learning system and the data available: supervised learning, unsupervised learning, and reinforcement learning. Let's delve into each of these:
+
+Supervised learning
+Supervised learning is the most common type of machine learning. In this approach, the model is trained on a labeled dataset. In other words, the data is accompanied by a label that the model is trying to predict. This could be anything from a category label to a real-valued number.
+
+The model learns a mapping between the input (features) and the output (label) during the training process. Once trained, the model can predict the output for new, unseen data.
+
+Common examples of supervised learning algorithms include linear regression for regression problems and logistic regression, decision trees, and support vector machines for classification problems. In practical terms, this could look like an image recognition process, wherein a dataset of images where each picture is labeled as "cat," "dog," etc., a supervised model can recognize and categorize new images accurately.
+
+Unsupervised learning
+Unsupervised learning, on the other hand, involves training the model on an unlabeled dataset. The model is left to find patterns and relationships in the data on its own.
+
+This type of learning is often used for clustering and dimensionality reduction. Clustering involves grouping similar data points together, while dimensionality reduction involves reducing the number of random variables under consideration by obtaining a set of principal variables.
+
+Common examples of unsupervised learning algorithms include k-means for clustering problems and Principal Component Analysis (PCA) for dimensionality reduction problems. Again, in practical terms, in the field of marketing, unsupervised learning is often used to segment a company's customer base. By examining purchasing patterns, demographic data, and other information, the algorithm can group customers into segments that exhibit similar behaviors without any pre-existing labels.
+
+Comparing supervised and unsupervised learning
+
+Comparing supervised and unsupervised learning
+
+Reinforcement learning
+Reinforcement learning is a type of machine learning where an agent learns to make decisions by interacting with its environment. The agent is rewarded or penalized (with points) for the actions it takes, and its goal is to maximize the total reward.
+
+Unlike supervised and unsupervised learning, reinforcement learning is particularly suited to problems where the data is sequential, and the decision made at each step can affect future outcomes.
+
+Common examples of reinforcement learning include game playing, robotics, resource management, and many more.
+
+Understanding the Impact of Machine Learning
+Machine Learning has had a transformative impact across various industries, revolutionizing traditional processes and paving the way for innovation. Let's explore some of these impacts:
+
+“Machine learning is the most transformative technology of our time. It’s going to transform every single vertical.”
+
+- Satya Nadella, CEO at Microsoft
+
+Healthcare
+In healthcare, machine learning is used to predict disease outbreaks, personalize patient treatment plans, and improve medical imaging accuracy. For instance, Google's DeepMind Health is working with doctors to build machine learning models to detect diseases earlier and improve patient care.
+
+Finance
+The finance sector has also greatly benefited from machine learning. It's used for credit scoring, algorithmic trading, and fraud detection. A recent survey found that 56% of global executives said that artificial intelligence (AI) and machine learning have been implemented into financial crime compliance programs.
+
+Transportation
+Machine learning is at the heart of the self-driving car revolution. Companies like Tesla and Waymo use machine learning algorithms to interpret sensor data in real-time, allowing their vehicles to recognize objects, make decisions, and navigate roads autonomously. Similarly, the Swedish Transport Administration recently started working with computer vision and machine learning specialists to optimize the country’s road infrastructure management.
+
+Some Applications of Machine Learning
+Machine learning applications are all around us, often working behind the scenes to enhance our daily lives. Here are some real-world examples:
+
+Recommendation systems
+Recommendation systems are one of the most visible applications of machine learning. Companies like Netflix and Amazon use machine learning to analyze your past behavior and recommend products or movies you might like. Learn how to build a recommendation engine in Python with our online course.
+
+Voice assistants
+Voice assistants like Siri, Alexa, and Google Assistant use machine learning to understand your voice commands and provide relevant responses. They continually learn from your interactions to improve their performance.
+
+Fraud detection
+Banks and credit card companies use machine learning to detect fraudulent transactions. By analyzing patterns of normal and abnormal behavior, they can flag suspicious activity in real-time. We have a fraud detection in Python course, which explores the concept in more detail.
+
+Social media
+Social media platforms use machine learning for a variety of tasks, from personalizing your feed to filtering out inappropriate content.
+
+Our machine learning cheat sheet covers different algorithms and their uses
+
+Our machine learning cheat sheet covers different algorithms and their uses
+
+Machine Learning Tools
+In the world of machine learning, having the right tools is just as important as understanding the concepts. These tools, which include programming languages and libraries, provide the building blocks to implement and deploy machine learning algorithms. Let's explore some of the most popular tools in machine learning:
+
+Python for machine learning
+Python is a popular language for machine learning due to its simplicity and readability, making it a great choice for beginners. It also has a strong ecosystem of libraries that are tailored for machine learning.
+
+Libraries such as NumPy and Pandas are used for data manipulation and analysis, while Matplotlib is used for data visualization. Scikit-learn provides a wide range of machine learning algorithms, and TensorFlow and PyTorch are used for building and training neural networks.
+
+Resources to get you started
+Machine Learning Fundamentals with Python Skill Track
+Machine Learning Scientist with Python Career Track
+Introduction to Machine Learning in Python Tutorial
+R for machine learning
+R is another language widely used in machine learning, particularly for statistical analysis. It has a rich ecosystem of packages that make it easy to implement machine learning algorithms.
+
+Packages like caret, mlr, and randomForest provide a variety of machine learning algorithms, from regression and classification to clustering and dimensionality reduction.
+
+Resources to get you started
+Machine Learning Fundamentals in R Skill Track
+Machine Learning Scientist with R Career Track
+Machine Learning in R for beginners Tutorial
+TensorFlow
+TensorFlow is a powerful open-source library for numerical computation, particularly well-suited for large-scale machine learning. It was developed by the Google Brain team and supports both CPUs and GPUs.
+
+TensorFlow allows you to build and train complex neural networks, making it a popular choice for deep learning applications.
+
+Resources to get you started
+Introduction to TensorFlow in Python Course
+TensorFlow Tutorial For Beginners
+Python Convolutional Neural Networks (CNN) with TensorFlow Tutorial
+Scikit-learn
+Scikit-learn is a Python library that provides a wide range of machine learning algorithms for both supervised and unsupervised learning. It's known for its clear API and detailed documentation.
+
+Scikit-learn is often used for data mining and data analysis, and it integrates well with other Python libraries like NumPy and Pandas.
+
+Resources to get you started
+Machine Learning with scikit-learn Course | DataCamp
+Supervised Learning with scikit-learn Course | DataCamp
+Python Machine Learning: Scikit-Learn Tutorial
+Scikit-Learn Cheat Sheet: Python Machine Learning
+Keras
+Keras is a high-level neural networks API, written in Python and capable of running on top of TensorFlow, CNTK, or Theano. It was developed with a focus on enabling fast experimentation.
+
+Keras provides a user-friendly interface for building and training neural networks, making it a great choice for beginners in deep learning.
+
+Resources to get you started
+Introduction to Deep Learning with Keras Course
+Advanced Deep Learning with Keras Course
+Keras Tutorial: Deep Learning in Python
+Keras Cheat Sheet: Neural Networks in Python
+PyTorch
+PyTorch is an open-source machine learning library based on the Torch library. It's known for its flexibility and efficiency, making it popular among researchers.
+
+PyTorch supports a wide range of applications, from computer vision to natural language processing. One of its key features is the dynamic computational graph, which allows for flexible and optimized computation.
+
+Resources to get you started
+Introduction to Deep Learning in PyTorch Course
+Deep Learning with PyTorch Course
+PyTorch Tutorial: Building a Simple Neural Network From Scratch
+PyTorch 2.0: Unveiling the Latest Updates and Insights with Code Examples
+The Top Machine Learning Careers in 2023
+Machine learning has opened up a wide range of career opportunities. From data science to AI engineering, professionals with machine learning skills are in high demand. Let's explore some of these career paths:
+
+Data scientist
+A data scientist uses scientific methods, processes, algorithms, and systems to extract knowledge and insights from structured and unstructured data. Machine learning is a key tool in a data scientist's arsenal, allowing them to make predictions and uncover patterns in data.
+
+Key skills:
+
+Statistical analysis
+Programming (Python, R)
+Machine learning
+Data visualization
+Problem-solving
+Essential tools:
+
+Python
+R
+SQL
+Hadoop
+Spark
+Tableau
+Machine learning engineer
+A machine learning engineer designs and implements machine learning systems. They run machine learning experiments using programming languages like Python and R, work with datasets, and apply machine learning algorithms and libraries.
+
+Key skills:
+
+Programming (Python, Java, R)
+Machine learning algorithms
+Statistics
+System design
+Essential tools:
+
+Python
+TensorFlow
+Scikit-learn
+PyTorch
+Keras
+Research scientist
+A research scientist in machine learning conducts research to advance the field of machine learning. They work in both academic and industry settings, developing new algorithms and techniques.
+
+Key skills:
+
+Deep understanding of machine learning algorithms
+Programming (Python, R)
+Research methodology
+Strong mathematical skills
+Essential tools:
+
+Python
+R
+TensorFlow
+PyTorch
+MATLAB
+Career
+
+Key Skills
+
+Essential Tools
+
+Data Scientist
+
+Statistical analysis, Programming (Python, R), Machine learning, Data visualization, Problem-solving
+
+Python, R, SQL, Hadoop, Spark, Tableau
+
+Machine Learning Engineer
+
+Programming (Python, Java, R), Machine learning algorithms, Statistics, System design
+
+Python, TensorFlow, Scikit-learn, PyTorch, Keras
+
+Research Scientist
+
+Deep understanding of machine learning algorithms, Programming (Python, R), Research methodology, Strong mathematical skills
+
+Python, R, TensorFlow, PyTorch, MATLAB
+
+How to Get Started in Machine Learning
+Starting a journey in machine learning can seem daunting, but with the right approach and resources, anyone can learn this exciting field. Here are some steps to get you started:
+
+Understand the basics
+Before diving into machine learning, it's important to have a strong foundation in mathematics (especially statistics and linear algebra) and programming (Python is a popular choice due to its simplicity and the availability of machine learning libraries).
+
+There are many resources available to learn these basics. Online platforms like Khan Academy and Coursera offer courses in mathematics and programming. Books like "Think Stats" and "Python Crash Course" are also good starting points.
+
+Choose the right tools
+Choosing the right tools is crucial in machine learning. Python, along with libraries like NumPy, Pandas, and Scikit-learn, is a popular choice due to its simplicity and versatility.
+
+To get started with these tools, you can follow online tutorials or take courses on platforms like DataCamp. Our Machine Learning Fundamentals skills track is the ideal place to start.
+
+Learn machine learning algorithms
+Once you're comfortable with the basics, you can start learning about machine learning algorithms. Start with simple algorithms like linear regression and decision trees before moving on to more complex ones like neural networks.
+
+Work on projects
+Working on projects is a great way to gain practical experience and reinforce what you've learned. Start with simple projects like predicting house prices or classifying iris species, and gradually take on more complex projects. We have an article exploring 25 machine learning projects for all levels, which can help you find something appropriate.
+
+Stay up-to-date
+Machine learning is a rapidly evolving field, so it's important to stay up-to-date with the latest developments. Following relevant blogs, attending conferences, and participating in online communities can help you stay informed. The DataFramed Podcast and our webinars and live trainings are a great way to keep up with trending topics in the industry.
+
+Final Thoughts
+From healthcare and finance to transportation and entertainment, machine learning algorithms are driving innovation and efficiency across various sectors. As we've seen, getting started in machine learning requires a strong foundation in mathematics and programming, a good understanding of machine learning algorithms, and practical experience working on projects.
+
+Whether you're interested in becoming a data scientist, a machine learning engineer, an AI specialist, or a research scientist, there's a wealth of opportunities in the field of machine learning. With the right tools and resources, anyone can learn machine learning and contribute to this exciting field.
+
+Remember, learning machine learning is a journey. It's a field that's constantly evolving, so it's important to stay up-to-date with the latest developments. Follow relevant blogs, attend conferences, and participate in online communities to keep learning and growing.
+
+Machine learning is not just a buzzword - it's a powerful tool that's changing the way we live and work. By understanding what machine learning is, how it works, and how to get started, you're taking the first step towards a future where you can harness the power of machine learning to solve complex problems and make a real impact.
+
+Start Your Machine Learning Journey Today!
+Machine Learning Fundamentals
+AdvancedSkill Level
+16hrs
+Learn the art and science of Machine Learning and come away being a boss at prediction, pattern recognition and the beginnings of Deep Learning.
+See Details
+Machine Learning Fundamentals
+AdvancedSkill Level
+24hrs
+Predict categorical and numeric responses via classification and regression, and discover the hidden structure of datasets with unsupervised learning.
+See Details
+See More
+Machine Learning FAQs
+What is machine learning?
+A branch of artificial intelligence that provides algorithms enabling machines to learn patterns from historical data to then be able to make predictions on unseen data without being explicitly programmed.
+
+What is the difference between AI and machine learning?
+
+What is the difference between machine learning and deep learning?
+
+Can I learn machine learning online?
+
+Do I need to go to university to become a machine learning engineer?
+
+Why is Python the preferred language in machine learning?
+
+What is a machine learning model?
+
+How can I become a machine learning engineer?
+
+How do I prepare for a machine learning interview?
+
+Photo of Matt Crabtree
+AUTHOR
+Matt Crabtree
+A writer and content editor in the edtech space. Committed to exploring data trends and enthusiastic about learning data science.
+
+TOPICS
+Machine Learning
+Data Science
+Matt Crabtree's photo
+Matt Crabtree
+A writer and content editor in the edtech space. Committed to exploring data trends.
+TOPICS
+Machine Learning
+Data Science
+Machine Learning Courses at DataCamp 
+
+COURSE
+
+Understanding Machine Learning
+2 hr
+191.8K
+An introduction to machine learning with no coding involved.
+See Details
+COURSE
+
+Machine Learning with Tree-Based Models in Python
+5 hr
+87.3K
+In this course, you'll learn how to use tree-based models and ensembles for regression and classification using scikit-learn.
+See Details
+COURSE
+
+Machine Learning for Business
+2 hr
+29.5K
+Understand the fundamentals of Machine Learning and how it's applied in the business world.
+See Details
+See More
+Related
+
+
+BLOG
+
+How to Learn Machine Learning in 2024
+Adel Nehme
+
+
+Machine Learning Jobs Header
+BLOG
+
+The Top Machine Learning Jobs in 2022 and How to Get Them
+Natassha Selvaraj
+
+BLOG
+
+8 Machine Learning Models Explained in 20 Minutes
+Natassha Selvaraj
+
+Grow your data skills with DataCamp for Mobile
+Make progress on the go with our mobile courses and daily 5-minute coding challenges.
+
+Get it on Google Play
+LEARN
+Learn Python
+Learn R
+Learn AI
+Learn SQL
+Learn Power BI
+Learn Tableau
+Learn Data Engineering
+Assessments
+Career Tracks
+Skill Tracks
+Courses
+Data Science Roadmap
+DATA COURSES
+Python Courses
+R Courses
+SQL Courses
+Power BI Courses
+Tableau Courses
+Alteryx Courses
+Azure Courses
+Google Sheets Courses
+AI Courses
+Data Analysis Courses
+Data Visualization Courses
+Machine Learning Courses
+Data Engineering Courses
+Probability & Statistics Courses
+DATALAB
+Get Started
+Pricing
+Security
+Documentation
+CERTIFICATION
+Certifications
+Data Scientist
+Data Analyst
+Data Engineer
+SQL Associate
+Power BI Data Analyst
+Tableau Certified Data Analyst
+Azure Fundamentals
+AI Fundamentals
+RESOURCES
+Resource Center
+Upcoming Events
+Blog
+Code-Alongs
+Tutorials
+Open Source
+RDocumentation
+Course Editor
+Book a Demo with DataCamp for Business
+Data Portfolio
+Portfolio Leaderboard
+PLANS
+Pricing
+For Business
+For Universities
+Discounts, Promos & Sales
+DataCamp Donates
+FOR BUSINESS
+Business Pricing
+Teams Plan
+Data & AI Unlimited Plan
+Customer Stories
+Partner Program
+ABOUT
+About Us
+Learner Stories
+Careers
+Become an Instructor
+Press
+Leadership
+Contact Us
+DataCamp Español
+SUPPORT
+Help Center
+Become an Affiliate
+Facebook
+Twitter
+LinkedIn
+YouTube
+Instagram
+Privacy Policy
+Cookie Notice
+Do Not Sell My Personal Information
+Accessibility
+Security
+Terms of Use
+© 2024 DataCamp, Inc. All Rights Reserved.
+
