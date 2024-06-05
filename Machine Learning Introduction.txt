@@ -249,7 +249,6 @@ print("The path length is:", final_path_length)
 
 
 
-
 7th Question 8 Puzzle problem:
 
 
