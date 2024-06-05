@@ -1,508 +1,467 @@
+2)
+BFS:
+
+class Graph:
+    
+    def __init__(self):
+        self.g={}
+        
+    def add_edge(self,u,v):
+        self.g.setdefault(u,[]).append(v)
+        
+    def bfs(self,s):
+        v,q=set(),[s]
+        
+        while q :
+            n=q.pop(0)
+            if n not in v:
+                print(n,end=" ")
+                v.add(n)
+                
+                q+=[i for i in self.g.get(n,[]) if i not in v]
+
+# Instantiate the Graph class
+g = Graph()
+
+# Define edges
+edges = [(0,1),(0,2),(1,2),(2,0),(2,3),(3,3)]
+
+# Add edges to the graph
+for u,v in edges:
+    g.add_edge(u,v)
+    
+# Call the bfs method from the Graph class
+g.bfs(2)
+
+
+DFS:
+
+from collections import defaultdict
+
+class Graph:
+    
+    def __init__(self):
+        self.graph = defaultdict(list)
+        
+    def add(self, u, v):
+        self.graph[u].append(v)
+        
+    def dfs_util(self, v, visited):
+        visited.add(v)
+        print(v, end=" ")
+        
+        for neighbour in self.graph[v]:
+            if neighbour not in visited:
+                self.dfs_util(neighbour, visited)
+                
+    def dfs(self, start):
+        visited = set()
+        self.dfs_util(start, visited)
+        
+        
+g = Graph()
+
+g.add(0, 1)                
+g.add(0, 2)                
+g.add(1, 2)                
+g.add(2, 0)                
+g.add(2, 3)                
+g.add(3, 3)     
+g.dfs(2)
+
+
+
+
+
+3)Water Jug:
+
+def waterjug(a, b, c):
+    jug1, jug2 = 0, 0
+    result = ""
+    
+    while jug1 != c and jug2 != c:
+        if jug1 == 0:
+            jug1 = a
+            result += "Fill the jug1\n"
+        elif jug2 == b:
+            jug2 = 0
+            result += "Empty the jug2\n"
+        else:
+            atp = min(jug1, b - jug2)
+            jug1 -= atp
+            jug2 += atp
+            result += "Pour water from jug 1 to jug 2\n"             
+            if jug1 == c or jug2 == c:
+                break
+                
+    if jug1 == c or jug2 == c:
+        result += f"Achieved {c} gallons\n"      else:
+        result += f"Not achieved {c} gallons\n"
+        
+    return result
 
-Machine Learning
-What is Machine Learning? Definition, Types, Tools & More
-Find out everything you need to know about machine learning in 2023, including its types, uses, careers, and how to get started in the industry.
 
-Machine Learning Concept
 
-In this era of digital transformation, understanding the technologies that drive innovation is no longer a luxury but a necessity. One technology that has been at the forefront of this transformation is machine learning. This article aims to demystify machine learning, providing a comprehensive guide for beginners and enthusiasts alike. We will delve into the definition of machine learning, its types, applications, and the tools used in the field. We will also explore the various career paths in machine learning and provide guidance on how to start your journey in this exciting field.
 
-What is Machine Learning?
-Machine Learning, often abbreviated as ML, is a subset of artificial intelligence (AI) that focuses on the development of computer algorithms that improve automatically through experience and by the use of data. In simpler terms, machine learning enables computers to learn from data and make decisions or predictions without being explicitly programmed to do so.
 
-At its core, machine learning is all about creating and implementing algorithms that facilitate these decisions and predictions. These algorithms are designed to improve their performance over time, becoming more accurate and effective as they process more data.
+4) A* question:
 
-In traditional programming, a computer follows a set of predefined instructions to perform a task. However, in machine learning, the computer is given a set of examples (data) and a task to perform, but it's up to the computer to figure out how to accomplish the task based on the examples it's given.
+import math
+import heapq
 
-For instance, if we want a computer to recognize images of cats, we don't provide it with specific instructions on what a cat looks like. Instead, we give it thousands of images of cats and let the machine learning algorithm figure out the common patterns and features that define a cat. Over time, as the algorithm processes more images, it gets better at recognizing cats, even when presented with images it has never seen before.
+class Cell:
+    def __init__(self):
+        self.parent_i, self.parent_j = 0, 0
+        self.f, self.g, self.h = float('inf'), float('inf'), 0
 
-This ability to learn from data and improve over time makes machine learning incredibly powerful and versatile. It's the driving force behind many of the technological advancements we see today, from voice assistants and recommendation systems to self-driving cars and predictive analytics.
+ROW, COL = 9, 10
 
-Machine learning vs AI vs deep learning
-Machine learning is often confused with artificial intelligence or deep learning. Let's take a look at how these terms differ from one another. For a more in-depth look, check out our comparison guides on AI vs machine learning and machine learning vs deep learning. 
+def is_valid(row, col):
+    return 0 <= row < ROW and 0 <= col < COL
 
-AI refers to the development of programs that behave intelligently and mimic human intelligence through a set of algorithms. The field focuses on three skills: learning, reasoning, and self-correction to obtain maximum efficiency. AI can refer to either machine learning-based programs or even explicitly programmed computer programs.
+def is_unblocked(grid, row, col):
+    return grid[row][col] == 1
 
-Machine learning is a subset of AI, which uses algorithms that learn from data to make predictions. These predictions can be generated through supervised learning, where algorithms learn patterns from existing data, or unsupervised learning, where they discover general patterns in data. ML models can predict numerical values based on historical data, categorize events as true or false, and cluster data points based on commonalities.
+def is_destination(row, col, dest):
+    return row == dest[0] and col == dest[1]
 
-Deep learning, on the other hand, is a subfield of machine learning dealing with algorithms based essentially on multi-layered artificial neural networks (ANN) that are inspired by the structure of the human brain.
+def calculate_h_value(row, col, dest):
+    return math.sqrt((row - dest[0]) ** 2 + (col - dest[1]) ** 2)
 
-Unlike conventional machine learning algorithms, deep learning algorithms are less linear, more complex, and hierarchical, capable of learning from enormous amounts of data, and able to produce highly accurate results. Language translation, image recognition, and personalized medicines are some examples of deep learning applications.
+def trace_path(cell_details, dest):
+    print("The Path is")
+    path, row, col = [], dest[0], dest[1]
+    while not (cell_details[row][col].parent_i == row and cell_details[row][col].parent_j == col):
+        path.append((row, col))
+        row, col = cell_details[row][col].parent_i, cell_details[row][col].parent_j
+    path.append((row, col))
+    print(" -> ".join(map(str, path[::-1])))
 
-Comparing different industry terms
+def a_star_search(grid, src, dest):
+    if not (is_valid(*src) and is_valid(*dest) and is_unblocked(grid, *src) and is_unblocked(grid, *dest)):
+        print("Source or destination is invalid or blocked")
+        return
 
-Comparing different industry terms
+    if is_destination(*src, dest):
+        print("We are already at the destination")
+        return
 
-The Importance of Machine Learning
-In the 21st century, data is the new oil, and machine learning is the engine that powers this data-driven world. It is a critical technology in today's digital age, and its importance cannot be overstated. This is reflected in the industry's projected growth, with the US Bureau of Labor Statistics predicting a 21% growth in jobs between 2021 and 2031.
+    closed_list = [[False] * COL for _ in range(ROW)]
+    cell_details = [[Cell() for _ in range(COL)] for _ in range(ROW)]
 
-Here are some reasons why it’s so essential in the modern world:
+    i, j = src
+    cell_details[i][j].f = cell_details[i][j].g = cell_details[i][j].h = 0
+    cell_details[i][j].parent_i, cell_details[i][j].parent_j = i, j
+    open_list = [(0.0, i, j)]
 
-Data processing. One of the primary reasons machine learning is so important is its ability to handle and make sense of large volumes of data. With the explosion of digital data from social media, sensors, and other sources, traditional data analysis methods have become inadequate. Machine learning algorithms can process these vast amounts of data, uncover hidden patterns, and provide valuable insights that can drive decision-making.
-Driving innovation. Machine learning is driving innovation and efficiency across various sectors. Here are a few examples:
-Healthcare. Algorithms are used to predict disease outbreaks, personalize patient treatment plans, and improve medical imaging accuracy.
-Finance. Machine learning is used for credit scoring, algorithmic trading, and fraud detection.
-Retail. Recommendation systems, supply chains, and customer service can all benefit from machine learning.
-The techniques used also find applications in sectors as diverse as agriculture, education, and entertainment.
-Enabling automation. Machine learning is a key enabler of automation. By learning from data and improving over time, machine learning algorithms can perform previously manual tasks, freeing humans to focus on more complex and creative tasks. This not only increases efficiency but also opens up new possibilities for innovation.
-How Does Machine Learning Work?
-Understanding how machine learning works involves delving into a step-by-step process that transforms raw data into valuable insights. Let's break down this process:
+    directions = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1)]
+    found_dest = False
 
-A beginner's guide to the Machine Learning Workflow
+    while open_list:
+        _, i, j = heapq.heappop(open_list)
+        closed_list[i][j] = True
 
-See the full workflow here
+        for dir in directions:
+            new_i, new_j = i + dir[0], j + dir[1]
+            if is_valid(new_i, new_j) and is_unblocked(grid, new_i, new_j) and not closed_list[new_i][new_j]:
+                if is_destination(new_i, new_j, dest):
+                    cell_details[new_i][new_j].parent_i, cell_details[new_i][new_j].parent_j = i, j
+                    print("The destination cell is found")
+                    trace_path(cell_details, dest)
+                    found_dest = True
+                    return
+                g_new = cell_details[i][j].g + 1.0
+                h_new = calculate_h_value(new_i, new_j, dest)
+                f_new = g_new + h_new
+                if cell_details[new_i][new_j].f == float('inf') or cell_details[new_i][new_j].f > f_new:
+                    heapq.heappush(open_list, (f_new, new_i, new_j))
+                    cell_details[new_i][new_j].f = f_new
+                    cell_details[new_i][new_j].g = g_new
+                    cell_details[new_i][new_j].h = h_new
+                    cell_details[new_i][new_j].parent_i, cell_details[new_i][new_j].parent_j = i, j
 
-Step 1: Data collection
-The first step in the machine learning process is data collection. Data is the lifeblood of machine learning - the quality and quantity of your data can directly impact your model's performance. Data can be collected from various sources such as databases, text files, images, audio files, or even scraped from the web.
+    if not found_dest:
+        print("Failed to find the destination cell")
 
-Once collected, the data needs to be prepared for machine learning. This process involves organizing the data in a suitable format, such as a CSV file or a database, and ensuring that the data is relevant to the problem you're trying to solve.
+def main():
+    grid = [
+        [1, 0, 1, 1, 1, 1, 0, 1, 1, 1], [1, 1, 1, 0, 1, 1, 1, 0, 1, 1], [1, 1, 1, 0, 1, 1, 0, 1, 0, 1],
+        [0, 0, 1, 0, 1, 0, 0, 0, 0, 1], [1, 1, 1, 0, 1, 1, 1, 0, 1, 0], [1, 0, 1, 1, 1, 1, 0, 1, 0, 0],
+        [1, 0, 0, 0, 0, 1, 0, 0, 0, 1], [1, 0, 1, 1, 1, 1, 0, 1, 1, 1], [1, 1, 1, 0, 0, 0, 1, 0, 0, 1]
+    ]
+    src, dest = [8, 0], [0, 0]
+    a_star_search(grid, src, dest)
 
-Step 2: Data preprocessing
-Data preprocessing is a crucial step in the machine learning process. It involves cleaning the data (removing duplicates, correcting errors), handling missing data (either by removing it or filling it in), and normalizing the data (scaling the data to a standard format).
+if __name__ == "__main__":
+    main()
 
-Preprocessing improves the quality of your data and ensures that your machine learning model can interpret it correctly. This step can significantly improve the accuracy of your model. Our course, Preprocessing for Machine Learning in Python, explores how to get your cleaned data ready for modeling.
 
-Step 3: Choosing the right model
-Once the data is prepared, the next step is to choose a machine learning model. There are many types of models to choose from, including linear regression, decision trees, and neural networks. The choice of model depends on the nature of your data and the problem you're trying to solve.
 
-Factors to consider when choosing a model include the size and type of your data, the complexity of the problem, and the computational resources available. You can read more about the different machine learning models in a separate article.
 
-Step 4: Training the model
-After choosing a model, the next step is to train it using the prepared data. Training involves feeding the data into the model and allowing it to adjust its internal parameters to better predict the output.
 
-During training, it's important to avoid overfitting (where the model performs well on the training data but poorly on new data) and underfitting (where the model performs poorly on both the training data and new data). You can learn more about the full machine learning process in our Machine Learning Fundamentals with Python skill track, which explores the essential concepts and how to apply them.
+6th question (Hill Climbing) : 
 
-Step 5: Evaluating the model
-Once the model is trained, it's important to evaluate its performance before deploying it. This involves testing the model on new data it hasn't seen during training.
+import random
+import numpy as np
 
-Common metrics for evaluating a model's performance include accuracy (for classification problems), precision and recall (for binary classification problems), and mean squared error (for regression problems). We cover this evaluation process in more detail in our Responsible AI webinar.
+coordinate = np.array([[1,2], [30,21], [56,23], [8,18], [20,50], [3,4], [11,6], [6,7], [15,20], [10,9], [12,12]])
 
-Step 6: Hyperparameter tuning and optimization
-After evaluating the model, you may need to adjust its hyperparameters to improve its performance. This process is known as parameter tuning or hyperparameter optimization.
+def generate_matrix(coords):
+    size = len(coords)
+    return np.array([[np.linalg.norm(coords[i] - coords[j]) for j in range(size)] for i in range(size)])
 
-Techniques for hyperparameter tuning include grid search (where you try out different combinations of parameters) and cross validation (where you divide your data into subsets and train your model on each subset to ensure it performs well on different data).
+def random_solution(matrix):
+    return random.sample(range(len(matrix)), len(matrix))
 
-We have a separate article on hyperparameter optimization in machine learning models, which covers the topic in more detail.
+def path_length(matrix, solution):
+    return sum(matrix[solution[i]][solution[i - 1]] for i in range(len(solution)))
 
-Step 7: Predictions and deployment
-Once the model is trained and optimized, it's ready to make predictions on new data. This process involves feeding new data into the model and using the model's output for decision-making or further analysis.
+def best_neighbor(matrix, solution):
+    best_solution = solution[:]
+    best_path = path_length(matrix, solution)
+    for i in range(len(solution)):
+        for j in range(i + 1, len(solution)):
+            neighbor = solution[:]
+            neighbor[i], neighbor[j] = neighbor[j], neighbor[i]
+            current_path = path_length(matrix, neighbor)
+            if current_path < best_path:
+                best_path, best_solution = current_path, neighbor
+    return best_solution, best_path
 
-Deploying the model involves integrating it into a production environment where it can process real-world data and provide real-time insights. This process is often known as MLOps. Discover more about MLOps in a separate tutorial.
+def hill_climbing(coords):
+    matrix = generate_matrix(coords)
+    current_solution = random_solution(matrix)
+    current_path = path_length(matrix, current_solution)
+    while True:
+        neighbor_solution, neighbor_path = best_neighbor(matrix, current_solution)
+        if neighbor_path >= current_path:
+            break
+        current_solution, current_path = neighbor_solution, neighbor_path
+    return current_path, current_solution
 
-Types of Machine Learning
-Machine learning can be broadly classified into three types based on the nature of the learning system and the data available: supervised learning, unsupervised learning, and reinforcement learning. Let's delve into each of these:
+final_path_length, final_solution = hill_climbing(coordinate)
+print("The solution is:", final_solution)
+print("The path length is:", final_path_length)
 
-Supervised learning
-Supervised learning is the most common type of machine learning. In this approach, the model is trained on a labeled dataset. In other words, the data is accompanied by a label that the model is trying to predict. This could be anything from a category label to a real-valued number.
 
-The model learns a mapping between the input (features) and the output (label) during the training process. Once trained, the model can predict the output for new, unseen data.
 
-Common examples of supervised learning algorithms include linear regression for regression problems and logistic regression, decision trees, and support vector machines for classification problems. In practical terms, this could look like an image recognition process, wherein a dataset of images where each picture is labeled as "cat," "dog," etc., a supervised model can recognize and categorize new images accurately.
 
-Unsupervised learning
-Unsupervised learning, on the other hand, involves training the model on an unlabeled dataset. The model is left to find patterns and relationships in the data on its own.
 
-This type of learning is often used for clustering and dimensionality reduction. Clustering involves grouping similar data points together, while dimensionality reduction involves reducing the number of random variables under consideration by obtaining a set of principal variables.
 
-Common examples of unsupervised learning algorithms include k-means for clustering problems and Principal Component Analysis (PCA) for dimensionality reduction problems. Again, in practical terms, in the field of marketing, unsupervised learning is often used to segment a company's customer base. By examining purchasing patterns, demographic data, and other information, the algorithm can group customers into segments that exhibit similar behaviors without any pre-existing labels.
 
-Comparing supervised and unsupervised learning
 
-Comparing supervised and unsupervised learning
+7th Question 8 Puzzle problem:
 
-Reinforcement learning
-Reinforcement learning is a type of machine learning where an agent learns to make decisions by interacting with its environment. The agent is rewarded or penalized (with points) for the actions it takes, and its goal is to maximize the total reward.
 
-Unlike supervised and unsupervised learning, reinforcement learning is particularly suited to problems where the data is sequential, and the decision made at each step can affect future outcomes.
 
-Common examples of reinforcement learning include game playing, robotics, resource management, and many more.
 
-Understanding the Impact of Machine Learning
-Machine Learning has had a transformative impact across various industries, revolutionizing traditional processes and paving the way for innovation. Let's explore some of these impacts:
+import copy
+from heapq import heappush, heappop
 
-“Machine learning is the most transformative technology of our time. It’s going to transform every single vertical.”
+n = 3
+rows = [1, 0, -1, 0]
+cols = [0, -1, 0, 1]
 
-- Satya Nadella, CEO at Microsoft
+class PriorityQueue:
+    def __init__(self):
+        self.heap = []
+    def push(self, key):
+        heappush(self.heap, key)
+    def pop(self):
+        return heappop(self.heap)
+    def empty(self):
+        return not self.heap
 
-Healthcare
-In healthcare, machine learning is used to predict disease outbreaks, personalize patient treatment plans, and improve medical imaging accuracy. For instance, Google's DeepMind Health is working with doctors to build machine learning models to detect diseases earlier and improve patient care.
+class Node:
+    def __init__(self, parent, mats, empty_tile_posi, costs, levels):
+        self.parent = parent
+        self.mats = mats
+        self.empty_tile_posi = empty_tile_posi
+        self.costs = costs
+        self.levels = levels
+    def __lt__(self, nxt):
+        return self.costs < nxt.costs
 
-Finance
-The finance sector has also greatly benefited from machine learning. It's used for credit scoring, algorithmic trading, and fraud detection. A recent survey found that 56% of global executives said that artificial intelligence (AI) and machine learning have been implemented into financial crime compliance programs.
+def calculateCosts(mats, final):
+    return sum(mats[i][j] != final[i][j] and mats[i][j] != 0 for i in range(n) for j in range(n))
 
-Transportation
-Machine learning is at the heart of the self-driving car revolution. Companies like Tesla and Waymo use machine learning algorithms to interpret sensor data in real-time, allowing their vehicles to recognize objects, make decisions, and navigate roads autonomously. Similarly, the Swedish Transport Administration recently started working with computer vision and machine learning specialists to optimize the country’s road infrastructure management.
+def newNodes(mats, empty_tile_posi, new_empty_tile_posi, levels, parent, final):
+    new_mats = copy.deepcopy(mats)
+    x1, y1 = empty_tile_posi
+    x2, y2 = new_empty_tile_posi
+    new_mats[x1][y1], new_mats[x2][y2] = new_mats[x2][y2], new_mats[x1][y1]
+    costs = calculateCosts(new_mats, final)
+    return Node(parent, new_mats, new_empty_tile_posi, costs, levels)
 
-Some Applications of Machine Learning
-Machine learning applications are all around us, often working behind the scenes to enhance our daily lives. Here are some real-world examples:
+def printMatrix(mats):
+    for row in mats:
+        print(" ".join(map(str, row)))
+    print()
 
-Recommendation systems
-Recommendation systems are one of the most visible applications of machine learning. Companies like Netflix and Amazon use machine learning to analyze your past behavior and recommend products or movies you might like. Learn how to build a recommendation engine in Python with our online course.
+def isSafe(x, y):
+    return 0 <= x < n and 0 <= y < n
 
-Voice assistants
-Voice assistants like Siri, Alexa, and Google Assistant use machine learning to understand your voice commands and provide relevant responses. They continually learn from your interactions to improve their performance.
+def printPath(root):
+    if root:
+        printPath(root.parent)
+        printMatrix(root.mats)
 
-Fraud detection
-Banks and credit card companies use machine learning to detect fraudulent transactions. By analyzing patterns of normal and abnormal behavior, they can flag suspicious activity in real-time. We have a fraud detection in Python course, which explores the concept in more detail.
+def solve(initial, empty_tile_posi, final):
+    pq = PriorityQueue()
+    root = Node(None, initial, empty_tile_posi, calculateCosts(initial, final), 0)
+    pq.push(root)
+    while not pq.empty():
+        minimum = pq.pop()
+        if minimum.costs == 0:
+            printPath(minimum)
+            return
+        for i in range(4):
+            new_tile_posi = [minimum.empty_tile_posi[0] + rows[i], minimum.empty_tile_posi[1] + cols[i]]
+            if isSafe(*new_tile_posi):
+                child = newNodes(minimum.mats, minimum.empty_tile_posi, new_tile_posi, minimum.levels + 1, minimum, final)
+                pq.push(child)
 
-Social media
-Social media platforms use machine learning for a variety of tasks, from personalizing your feed to filtering out inappropriate content.
+initial = [[1, 2, 3], [5, 6, 0], [7, 8, 4]]
+final = [[1, 2, 3], [5, 8, 6], [0, 7, 4]]
+empty_tile_posi = [1, 2]
 
-Our machine learning cheat sheet covers different algorithms and their uses
+solve(initial, empty_tile_posi, final)
 
-Our machine learning cheat sheet covers different algorithms and their uses
 
-Machine Learning Tools
-In the world of machine learning, having the right tools is just as important as understanding the concepts. These tools, which include programming languages and libraries, provide the building blocks to implement and deploy machine learning algorithms. Let's explore some of the most popular tools in machine learning:
 
-Python for machine learning
-Python is a popular language for machine learning due to its simplicity and readability, making it a great choice for beginners. It also has a strong ecosystem of libraries that are tailored for machine learning.
 
-Libraries such as NumPy and Pandas are used for data manipulation and analysis, while Matplotlib is used for data visualization. Scikit-learn provides a wide range of machine learning algorithms, and TensorFlow and PyTorch are used for building and training neural networks.
 
-Resources to get you started
-Machine Learning Fundamentals with Python Skill Track
-Machine Learning Scientist with Python Career Track
-Introduction to Machine Learning in Python Tutorial
-R for machine learning
-R is another language widely used in machine learning, particularly for statistical analysis. It has a rich ecosystem of packages that make it easy to implement machine learning algorithms.
+8) 4queen problem:
 
-Packages like caret, mlr, and randomForest provide a variety of machine learning algorithms, from regression and classification to clustering and dimensionality reduction.
 
-Resources to get you started
-Machine Learning Fundamentals in R Skill Track
-Machine Learning Scientist with R Career Track
-Machine Learning in R for beginners Tutorial
-TensorFlow
-TensorFlow is a powerful open-source library for numerical computation, particularly well-suited for large-scale machine learning. It was developed by the Google Brain team and supports both CPUs and GPUs.
+N = 4
 
-TensorFlow allows you to build and train complex neural networks, making it a popular choice for deep learning applications.
+ld = [0] * 30
+ 
 
-Resources to get you started
-Introduction to TensorFlow in Python Course
-TensorFlow Tutorial For Beginners
-Python Convolutional Neural Networks (CNN) with TensorFlow Tutorial
-Scikit-learn
-Scikit-learn is a Python library that provides a wide range of machine learning algorithms for both supervised and unsupervised learning. It's known for its clear API and detailed documentation.
+rd = [0] * 30
 
-Scikit-learn is often used for data mining and data analysis, and it integrates well with other Python libraries like NumPy and Pandas.
+cl = [0] * 30
+ 
 
-Resources to get you started
-Machine Learning with scikit-learn Course | DataCamp
-Supervised Learning with scikit-learn Course | DataCamp
-Python Machine Learning: Scikit-Learn Tutorial
-Scikit-Learn Cheat Sheet: Python Machine Learning
-Keras
-Keras is a high-level neural networks API, written in Python and capable of running on top of TensorFlow, CNTK, or Theano. It was developed with a focus on enabling fast experimentation.
+ 
+def printSolution(board):
+    for i in range(N):
+        for j in range(N):
+            print(" Q " if board[i][j] == 1 else " . ", end="")
+        print()
 
-Keras provides a user-friendly interface for building and training neural networks, making it a great choice for beginners in deep learning.
+ 
+ 
+def solveNQUtil(board, col):
 
-Resources to get you started
-Introduction to Deep Learning with Keras Course
-Advanced Deep Learning with Keras Course
-Keras Tutorial: Deep Learning in Python
-Keras Cheat Sheet: Neural Networks in Python
-PyTorch
-PyTorch is an open-source machine learning library based on the Torch library. It's known for its flexibility and efficiency, making it popular among researchers.
+    if col >= N:
+        return True
+ 
 
-PyTorch supports a wide range of applications, from computer vision to natural language processing. One of its key features is the dynamic computational graph, which allows for flexible and optimized computation.
-
-Resources to get you started
-Introduction to Deep Learning in PyTorch Course
-Deep Learning with PyTorch Course
-PyTorch Tutorial: Building a Simple Neural Network From Scratch
-PyTorch 2.0: Unveiling the Latest Updates and Insights with Code Examples
-The Top Machine Learning Careers in 2023
-Machine learning has opened up a wide range of career opportunities. From data science to AI engineering, professionals with machine learning skills are in high demand. Let's explore some of these career paths:
-
-Data scientist
-A data scientist uses scientific methods, processes, algorithms, and systems to extract knowledge and insights from structured and unstructured data. Machine learning is a key tool in a data scientist's arsenal, allowing them to make predictions and uncover patterns in data.
-
-Key skills:
-
-Statistical analysis
-Programming (Python, R)
-Machine learning
-Data visualization
-Problem-solving
-Essential tools:
-
-Python
-R
-SQL
-Hadoop
-Spark
-Tableau
-Machine learning engineer
-A machine learning engineer designs and implements machine learning systems. They run machine learning experiments using programming languages like Python and R, work with datasets, and apply machine learning algorithms and libraries.
-
-Key skills:
-
-Programming (Python, Java, R)
-Machine learning algorithms
-Statistics
-System design
-Essential tools:
-
-Python
-TensorFlow
-Scikit-learn
-PyTorch
-Keras
-Research scientist
-A research scientist in machine learning conducts research to advance the field of machine learning. They work in both academic and industry settings, developing new algorithms and techniques.
-
-Key skills:
-
-Deep understanding of machine learning algorithms
-Programming (Python, R)
-Research methodology
-Strong mathematical skills
-Essential tools:
-
-Python
-R
-TensorFlow
-PyTorch
-MATLAB
-Career
-
-Key Skills
-
-Essential Tools
-
-Data Scientist
-
-Statistical analysis, Programming (Python, R), Machine learning, Data visualization, Problem-solving
-
-Python, R, SQL, Hadoop, Spark, Tableau
-
-Machine Learning Engineer
-
-Programming (Python, Java, R), Machine learning algorithms, Statistics, System design
-
-Python, TensorFlow, Scikit-learn, PyTorch, Keras
-
-Research Scientist
-
-Deep understanding of machine learning algorithms, Programming (Python, R), Research methodology, Strong mathematical skills
-
-Python, R, TensorFlow, PyTorch, MATLAB
-
-How to Get Started in Machine Learning
-Starting a journey in machine learning can seem daunting, but with the right approach and resources, anyone can learn this exciting field. Here are some steps to get you started:
-
-Understand the basics
-Before diving into machine learning, it's important to have a strong foundation in mathematics (especially statistics and linear algebra) and programming (Python is a popular choice due to its simplicity and the availability of machine learning libraries).
-
-There are many resources available to learn these basics. Online platforms like Khan Academy and Coursera offer courses in mathematics and programming. Books like "Think Stats" and "Python Crash Course" are also good starting points.
-
-Choose the right tools
-Choosing the right tools is crucial in machine learning. Python, along with libraries like NumPy, Pandas, and Scikit-learn, is a popular choice due to its simplicity and versatility.
-
-To get started with these tools, you can follow online tutorials or take courses on platforms like DataCamp. Our Machine Learning Fundamentals skills track is the ideal place to start.
-
-Learn machine learning algorithms
-Once you're comfortable with the basics, you can start learning about machine learning algorithms. Start with simple algorithms like linear regression and decision trees before moving on to more complex ones like neural networks.
-
-Work on projects
-Working on projects is a great way to gain practical experience and reinforce what you've learned. Start with simple projects like predicting house prices or classifying iris species, and gradually take on more complex projects. We have an article exploring 25 machine learning projects for all levels, which can help you find something appropriate.
-
-Stay up-to-date
-Machine learning is a rapidly evolving field, so it's important to stay up-to-date with the latest developments. Following relevant blogs, attending conferences, and participating in online communities can help you stay informed. The DataFramed Podcast and our webinars and live trainings are a great way to keep up with trending topics in the industry.
-
-Final Thoughts
-From healthcare and finance to transportation and entertainment, machine learning algorithms are driving innovation and efficiency across various sectors. As we've seen, getting started in machine learning requires a strong foundation in mathematics and programming, a good understanding of machine learning algorithms, and practical experience working on projects.
-
-Whether you're interested in becoming a data scientist, a machine learning engineer, an AI specialist, or a research scientist, there's a wealth of opportunities in the field of machine learning. With the right tools and resources, anyone can learn machine learning and contribute to this exciting field.
-
-Remember, learning machine learning is a journey. It's a field that's constantly evolving, so it's important to stay up-to-date with the latest developments. Follow relevant blogs, attend conferences, and participate in online communities to keep learning and growing.
-
-Machine learning is not just a buzzword - it's a powerful tool that's changing the way we live and work. By understanding what machine learning is, how it works, and how to get started, you're taking the first step towards a future where you can harness the power of machine learning to solve complex problems and make a real impact.
-
-Start Your Machine Learning Journey Today!
-Machine Learning Fundamentals
-AdvancedSkill Level
-16hrs
-Learn the art and science of Machine Learning and come away being a boss at prediction, pattern recognition and the beginnings of Deep Learning.
-See Details
-Machine Learning Fundamentals
-AdvancedSkill Level
-24hrs
-Predict categorical and numeric responses via classification and regression, and discover the hidden structure of datasets with unsupervised learning.
-See Details
-See More
-Machine Learning FAQs
-What is machine learning?
-A branch of artificial intelligence that provides algorithms enabling machines to learn patterns from historical data to then be able to make predictions on unseen data without being explicitly programmed.
-
-What is the difference between AI and machine learning?
-
-What is the difference between machine learning and deep learning?
-
-Can I learn machine learning online?
-
-Do I need to go to university to become a machine learning engineer?
-
-Why is Python the preferred language in machine learning?
-
-What is a machine learning model?
-
-How can I become a machine learning engineer?
-
-How do I prepare for a machine learning interview?
-
-Photo of Matt Crabtree
-AUTHOR
-Matt Crabtree
-A writer and content editor in the edtech space. Committed to exploring data trends and enthusiastic about learning data science.
-
-TOPICS
-Machine Learning
-Data Science
-Matt Crabtree's photo
-Matt Crabtree
-A writer and content editor in the edtech space. Committed to exploring data trends.
-TOPICS
-Machine Learning
-Data Science
-Machine Learning Courses at DataCamp 
-
-COURSE
-
-Understanding Machine Learning
-2 hr
-191.8K
-An introduction to machine learning with no coding involved.
-See Details
-COURSE
-
-Machine Learning with Tree-Based Models in Python
-5 hr
-87.3K
-In this course, you'll learn how to use tree-based models and ensembles for regression and classification using scikit-learn.
-See Details
-COURSE
-
-Machine Learning for Business
-2 hr
-29.5K
-Understand the fundamentals of Machine Learning and how it's applied in the business world.
-See Details
-See More
-Related
-
-
-BLOG
-
-How to Learn Machine Learning in 2024
-Adel Nehme
-
-
-Machine Learning Jobs Header
-BLOG
-
-The Top Machine Learning Jobs in 2022 and How to Get Them
-Natassha Selvaraj
-
-BLOG
-
-8 Machine Learning Models Explained in 20 Minutes
-Natassha Selvaraj
-
-Grow your data skills with DataCamp for Mobile
-Make progress on the go with our mobile courses and daily 5-minute coding challenges.
-
-Get it on Google Play
-LEARN
-Learn Python
-Learn R
-Learn AI
-Learn SQL
-Learn Power BI
-Learn Tableau
-Learn Data Engineering
-Assessments
-Career Tracks
-Skill Tracks
-Courses
-Data Science Roadmap
-DATA COURSES
-Python Courses
-R Courses
-SQL Courses
-Power BI Courses
-Tableau Courses
-Alteryx Courses
-Azure Courses
-Google Sheets Courses
-AI Courses
-Data Analysis Courses
-Data Visualization Courses
-Machine Learning Courses
-Data Engineering Courses
-Probability & Statistics Courses
-DATALAB
-Get Started
-Pricing
-Security
-Documentation
-CERTIFICATION
-Certifications
-Data Scientist
-Data Analyst
-Data Engineer
-SQL Associate
-Power BI Data Analyst
-Tableau Certified Data Analyst
-Azure Fundamentals
-AI Fundamentals
-RESOURCES
-Resource Center
-Upcoming Events
-Blog
-Code-Alongs
-Tutorials
-Open Source
-RDocumentation
-Course Editor
-Book a Demo with DataCamp for Business
-Data Portfolio
-Portfolio Leaderboard
-PLANS
-Pricing
-For Business
-For Universities
-Discounts, Promos & Sales
-DataCamp Donates
-FOR BUSINESS
-Business Pricing
-Teams Plan
-Data & AI Unlimited Plan
-Customer Stories
-Partner Program
-ABOUT
-About Us
-Learner Stories
-Careers
-Become an Instructor
-Press
-Leadership
-Contact Us
-DataCamp Español
-SUPPORT
-Help Center
-Become an Affiliate
-Facebook
-Twitter
-LinkedIn
-YouTube
-Instagram
-Privacy Policy
-Cookie Notice
-Do Not Sell My Personal Information
-Accessibility
-Security
-Terms of Use
-© 2024 DataCamp, Inc. All Rights Reserved.
-
+    for i in range(N):
+ 
+        if (ld[i - col + N - 1] != 1 and rd[i + col] != 1) and cl[i] != 1:
+  
+            board[i][col] = 1
+            ld[i - col + N - 1] = rd[i + col] = cl[i] = 1
+ 
+            # Recur to place the rest of the queens
+            if solveNQUtil(board, col + 1):
+                return True
+
+            board[i][col] = 0  # BACKTRACK
+            ld[i - col + N - 1] = rd[i + col] = cl[i] = 0
+
+ 
+def solveNQ():
+    board = [[0 for _ in range(N)] for _ in range(N)]
+ 
+    if not solveNQUtil(board, 0):
+        print("Solution does not exist")
+        return False
+ 
+    printSolution(board)
+    return True
+ 
+
+if __name__ == "__main__":
+    solveNQ()
+
+
+9) Travelling Salesman:
+
+
+from sys import maxsize
+from itertools import permutations
+V = 4
+ 
+
+def travellingSalesmanProblem(graph, s):
+
+    vertex = []
+    for i in range(V):
+        if i != s:
+            vertex.append(i)
+ 
+
+    min_path = maxsize
+    next_permutation=permutations(vertex)
+    for i in next_permutation:
+ 
+        # store current Path weight(cost)
+        current_pathweight = 0
+ 
+        # compute current path weight
+        k = s
+        for j in i:
+            current_pathweight += graph[k][j]
+            k = j
+        current_pathweight += graph[k][s]
+ 
+        # update minimum
+        min_path = min(min_path, current_pathweight)
+         
+    return min_path
+
+if __name__ == "__main__":
+
+    graph = [[0, 10, 15, 20], [10, 0, 35, 25],
+            [15, 35, 0, 30], [20, 25, 30, 0]]
+    s = 0
+    print(travellingSalesmanProblem(graph, s))
+
+
+
+9) Travelling salesman:
+
+
+from sys import maxsize
+from itertools import  permutations
+
+V=4
+def tsp(graph,s):
+    vertex =[]
+    for i in range(V):
+        vertex.append(i)
+        
+    min_path=maxsize
+    next_permutations=permutations(vertex)
+    
+    for i in next_permutations:
+        
+        cw=0
+        k=sq    
+        for j in i:
+            cw+=graph[k][j]
+            k=j
+        cw+=graph[k][s]
+            
+        min_path=min(min_path,cw)
+    return min_path
+    
+if __name__=="__main__":
+    graph = [[0, 10, 15, 20], [10, 0, 35, 25],
+            [15, 35, 0, 30], [20, 25, 30, 0]]
+    s=0
+    print(tsp(graph,s))
