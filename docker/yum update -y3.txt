@@ -1,0 +1,15 @@
+yum update -y
+    2  sudo yum install -y docker
+    3  sudo service docker start
+    4  sudo usermod -a -G docker ec2-user
+    5  docker version
+    6  vi dockerfile
+    7  docker build -t my-dockerimage .
+    8  docker images
+    9  aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr.aws/o7t6l3i3
+   10  aws configure
+   11  aws ecr-public get-login-password --region us-east-1 | docker login --username AWS --password-stdin public.ecr
+FROM httpd:latest
+MAINTAINER shalini
+EXPOSE 80
+CMD ["httpd", "-D', "FOREGROUND"]

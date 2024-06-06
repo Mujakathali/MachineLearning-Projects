@@ -1,0 +1,48 @@
+import java.util.*;
+class Main{
+    public static void main(String args[])
+    {
+        Scanner oc=new Scanner(System.in);
+        System.out.println("Enter the IP:");
+        
+        String ip=oc.nextLine();
+        System.out.println("Enter the address in subnets:");
+        int n=oc.nextInt();
+        
+        String[] ss=ip.split("\\.");
+        StringBuilder ipb=new StringBuilder();
+        for(String part:ss)
+        {
+            ipb.append(String.format("%8s",Integer.toBinaryString(Integer.parseInt(part))).replace(' ','0'));
+        }
+        
+        int bits=(int)Math.ceil(Math.log(n)/Math.log(2));
+        int mask=32-bits;
+        
+        String network=ipb.substring(0,mask)+"0".repeat(bits);
+        String broadcast=ipb.substring(0,mask)+"1".repeat(bits);
+        
+        String networkaddress=binarytodotterdecimal(network);
+        String broadcastaddress=binarytodotterdecimal(broadcast);
+        
+        System.out.println("BinaryFormat : "+ipb);
+        System.out.println("Subnet Mask : "+mask);
+        System.out.println("networkaddress : "+networkaddress);
+        System.out.println("broadcastaddress : "+broadcastaddress);
+        
+    }
+    
+    static String binarytodotterdecimal(String binary)
+    {
+        StringBuilder sb=new StringBuilder();
+        for(int i=0;i<4;i++)
+        {
+            String part=binary.substring(i*8,(i+1)*8);
+            sb.append(Integer.parseInt(part,2));    
+            if(i<3) sb.append('.');
+            
+        }
+        return sb.toString();
+    }
+    
+}

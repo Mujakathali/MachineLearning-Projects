@@ -1,0 +1,29 @@
+vi docker file
+
+docker build -t my-apache2-aiml . //build image
+
+
+docker run -d -p 8081:80 my-apache2-aiml //create a container for the given docker file  image build
+
+docker container ls
+
+
+1  yum update -y
+    2  sudo yum install -y docker
+    3  sudo service docker start
+    4  sudo usermod -a -G docker ec2-user
+    5  docker version
+    6  vi dockerfile
+    7  vi index.html
+    8  docker build -t my-apache2-aiml .
+    9  docker run -d -p 8080:80 my-apache2-aiml
+   10  docker images
+   11  docker container ls
+
+
+FROM httpd:latest
+COPY index.html /var/www/html/
+EXPOSE 80
+CMD ["httpd", "-D", "FOREGROUND"]
+
+

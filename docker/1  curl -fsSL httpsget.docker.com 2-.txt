@@ -1,0 +1,9 @@
+1  curl -fsSL https://get.docker.com -o get-docker.sh
+    2  ls
+    3  sh get-docker.sh
+    4  docker --version
+    5  docker pull httpd
+    6  docker images
+    7  docker container ls
+    8  docker run --name Apache-server -p 8080:80 -d httpd
+    9  docker container ls
